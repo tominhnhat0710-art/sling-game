@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!-- BAY XA 3D - prototype Giai doan 1 - build 2026-08-19 -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bay Xa 3D">
+<meta name="theme-color" content="#9fc4e6">
+<title>BAY XA 3D</title>
+<link rel="icon" href="data:,">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:#9fc4e6;touch-action:none;
+    user-select:none;-webkit-user-select:none;overscroll-behavior:none;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff}
+  canvas{display:block}
+
+  #hud{position:fixed;inset:0;pointer-events:none;
+    padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 16px)}
+  .chip{background:rgba(8,16,32,.42);backdrop-filter:blur(8px);border-radius:14px;padding:8px 13px;display:inline-block}
+  #top{display:flex;justify-content:space-between;align-items:flex-start}
+  #dist{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.5px}
+  .lbl{font-size:9px;letter-spacing:1.6px;color:#c6d6f0;text-transform:uppercase;margin-top:3px}
+  #right{text-align:right}
+  #nitro{display:flex;gap:5px;justify-content:flex-end;margin-top:7px}
+  .pip{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.2)}
+  .pip.on{background:linear-gradient(135deg,#ffd166,#ff6b35);box-shadow:0 0 9px rgba(255,140,66,.8)}
+
+  #bottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 26px);text-align:center}
+  #hint{font-size:12px;font-weight:800;letter-spacing:2px;text-shadow:0 2px 10px rgba(0,0,0,.6);
+    animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+  #bar{display:none;width:min(280px,72vw);height:20px;margin:12px auto 0;
+    background:rgba(8,16,32,.5);border-radius:10px;padding:3px}
+  #barFill{height:100%;width:0;border-radius:8px;
+    background:linear-gradient(90deg,#3ddc97 0%,#ffd166 62%,#ff4d4d 100%)}
+
+  #result{position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;
+    align-items:center;background:rgba(6,11,24,.74);backdrop-filter:blur(14px);z-index:20;
+    padding:24px;text-align:center}
+  #result.on{display:flex}
+  #rDist{font-size:76px;font-weight:900;line-height:.9;
+    background:linear-gradient(100deg,#8affc1,#63d2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #rNew{color:#ffd166;font-size:12px;font-weight:800;letter-spacing:2.5px;margin-top:14px}
+  .go{pointer-events:auto;border:0;margin-top:26px;border-radius:15px;padding:16px 46px;
+    font-size:17px;font-weight:900;letter-spacing:2px;font-family:inherit;
+    background:linear-gradient(135deg,#ffd166,#ff7a3d);color:#2b1400;box-shadow:0 10px 28px rgba(255,122,61,.32)}
+
+  #loading{position:fixed;inset:0;display:grid;place-items:center;background:#0d1326;z-index:40;
+    font-size:12px;letter-spacing:3px;color:#7f8bb5}
+</style>
+</head>
+<body>
+
+<div id="loading">DANG TAI...</div>
+
+<div id="hud">
+  <div id="top">
+    <div class="chip">
+      <div><span id="dist">0</span> <span style="font-size:16px;font-weight:700;opacity:.75">m</span></div>
+      <div class="lbl">Ky luc <span id="bestHud">0</span> m</div>
+    </div>
+    <div id="right" class="chip">
+      <div class="lbl" style="margin:0">Do cao</div>
+      <div id="alt" style="font-size:17px;font-weight:800">0 m</div>
+      <div id="nitro"><i class="pip"></i><i class="pip"></i></div>
+    </div>
+  </div>
+  <div id="bottom">
+    <div id="hint">CHAM DE CHON GOC</div>
+    <div id="bar"><div id="barFill"></div></div>
+  </div>
+</div>
+
+<div id="result">
+  <div id="rDist">0</div>
+  <div class="lbl" style="font-size:11px;letter-spacing:4px">met</div>
+  <div class="lbl" style="margin-top:18px;font-size:11px">Ky luc <span id="rBest">0 m</span></div>
+  <div id="rNew">KY LUC MOI!</div>
+  <button class="go" id="btnAgain">PHONG LAI</button>
+</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "./vendor/three.module.min.js",
+    "rapier": "./vendor/rapier.mjs"
+} }
+</script>
+<script type="module" src="./src/main.js"></script>
+<script>
+  document.getElementById('btnAgain').addEventListener('click', e => {
+    e.stopPropagation();
+    if (window.__game) window.__game.resetRun();
+  });
+</script>
+</body>
+</html>
