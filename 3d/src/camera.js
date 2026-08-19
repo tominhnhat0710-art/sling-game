@@ -10,6 +10,8 @@ import { heightAt } from './terrain.js';
 export class ChaseCam {
   constructor(cam) {
     this.cam = cam;
+    this.shake = 0;
+    this._s = new THREE.Vector3();
     this.pos = new THREE.Vector3();
     this.look = new THREE.Vector3();
     this.blend = 0;               // 0 = goc ngam, 1 = goc bay
@@ -18,8 +20,11 @@ export class ChaseCam {
     this._first = true;
   }
 
+  addShake(amount) { this.shake = Math.min(T.shakeMax, this.shake + amount); }
+
   reset(carPos) {
     this.blend = 0;
+    this.shake = 0;
     this._first = true;
     this.update(carPos, { x: 0, y: 0, z: 0 }, 0, 1 / 60);
   }
@@ -40,10 +45,13 @@ export class ChaseCam {
     // Keo ra xa chu yeu theo chieu ngang. Neu keo ca chieu cao thi camera se chuc
     // xuong nhin tu tren khi xe bay cao, va nguoi choi mat cam giac do cao.
     const pullY = 1 + (pull - 1) * T.camPullY;
+    // Do lech sang ben chi ap dung khi dang bay, va do camSide quyet dinh.
+    // camSide = 0 thi camera dan ngay sau duoi xe.
+    const zSide = (a[2] * (1 - b) + f[2] * b) + T.camSide * T.camSideDist * b;
     this._p.set(
       (a[0] * (1 - b) + f[0] * b) * pull,
       (a[1] * (1 - b) + f[1] * b) * pullY,
-      (a[2] * (1 - b) + f[2] * b) * pull
+      zSide * pull
     );
     this._p.x += carPos.x; this._p.y += carPos.y; this._p.z += carPos.z;
 
@@ -51,10 +59,13 @@ export class ChaseCam {
     const gy = heightAt(this._p.x, this._p.z) + 2.5;
     if (this._p.y < gy) this._p.y = gy;
 
+    // Diem ngam: luc ngam thi ngam ra truoc it, de xe khong bi day sang le man hinh.
+    // Luc bay thi ngam theo huong bay.
+    const al = T.camAimLook;
     this._l.set(
-      carPos.x + vel.x * T.camLookAhead + 6,
-      carPos.y + vel.y * T.camLookAhead * 0.4 + T.camLookUp,
-      carPos.z + vel.z * T.camLookAhead
+      carPos.x + (al[0] * (1 - b)) + (vel.x * T.camLookAhead + 6) * b,
+      carPos.y + (al[1] * (1 - b)) + (vel.y * T.camLookAhead * 0.4 + T.camLookUp) * b,
+      carPos.z + (al[2] * (1 - b)) + (vel.z * T.camLookAhead) * b
     );
 
     const k = this._first ? 1 : T.camFollow;
@@ -63,6 +74,15 @@ export class ChaseCam {
     this._first = false;
 
     this.cam.position.copy(this.pos);
+
+    // rung camera: cong mot do lech ngau nhien nho, tat dan
+    if (this.shake > 0.02) {
+      const a = this.shake * 0.05;
+      this._s.set((Math.random() - 0.5) * a, (Math.random() - 0.5) * a, (Math.random() - 0.5) * a);
+      this.cam.position.add(this._s);
+      this.shake -= this.shake * Math.min(1, T.shakeDecay * dt);
+    } else this.shake = 0;
+
     this.cam.lookAt(this.look);
   }
 }

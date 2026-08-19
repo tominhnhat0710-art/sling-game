@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BAY XA 3D - prototype Giai doan 1 - build 2026-08-19 -->
+<!-- BAY XA 3D - Giai doan 2 - sling keo tha + bui, khoi, rung, am thanh - build 2026-08-19 -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -30,11 +30,11 @@
   .pip{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.2)}
   .pip.on{background:linear-gradient(135deg,#ffd166,#ff6b35);box-shadow:0 0 9px rgba(255,140,66,.8)}
 
-  #bottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 26px);text-align:center}
+  #bottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 86px);text-align:center}
   #hint{font-size:12px;font-weight:800;letter-spacing:2px;text-shadow:0 2px 10px rgba(0,0,0,.6);
     animation:pulse 1.5s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
-  #bar{display:none;width:min(280px,72vw);height:20px;margin:12px auto 0;
+  #bar{display:none;width:min(300px,78vw);height:22px;margin:12px auto 0;
     background:rgba(8,16,32,.5);border-radius:10px;padding:3px}
   #barFill{height:100%;width:0;border-radius:8px;
     background:linear-gradient(90deg,#3ddc97 0%,#ffd166 62%,#ff4d4d 100%)}
@@ -50,6 +50,17 @@
     font-size:17px;font-weight:900;letter-spacing:2px;font-family:inherit;
     background:linear-gradient(135deg,#ffd166,#ff7a3d);color:#2b1400;box-shadow:0 10px 28px rgba(255,122,61,.32)}
 
+  #btnMute{pointer-events:auto;position:absolute;left:16px;
+    bottom:calc(env(safe-area-inset-bottom) + 22px);width:42px;height:42px;border:0;border-radius:50%;
+    background:rgba(8,16,32,.42);backdrop-filter:blur(8px);font-size:16px;line-height:1;padding:0}
+
+  #btnStop{display:none;pointer-events:auto;position:absolute;
+    left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 22px);
+    border:1.5px solid rgba(255,120,110,.65);border-radius:13px;padding:12px 17px;
+    background:rgba(12,18,34,.62);backdrop-filter:blur(8px);color:#ffb3ac;
+    font-family:inherit;font-size:12px;font-weight:900;letter-spacing:1.4px}
+  #btnStop:active{background:rgba(255,90,80,.9);color:#2b0705}
+
   #loading{position:fixed;inset:0;display:grid;place-items:center;background:#0d1326;z-index:40;
     font-size:12px;letter-spacing:3px;color:#7f8bb5}
 </style>
@@ -63,7 +74,15 @@
     <div class="chip">
       <div><span id="dist">0</span> <span style="font-size:16px;font-weight:700;opacity:.75">m</span></div>
       <div class="lbl">Ky luc <span id="bestHud">0</span> m</div>
+      <div id="angleBox" style="display:none;margin-top:7px;padding-top:7px;
+           border-top:1px solid rgba(255,255,255,.14)">
+        <span class="lbl" style="margin:0">Goc</span>
+        <span id="angle" style="font-size:18px;font-weight:900;color:#ffd166;margin-left:4px">0&deg;</span>
+        <span class="lbl" style="margin:0 0 0 9px">Luc</span>
+        <span id="pwr" style="font-size:18px;font-weight:900;color:#3ddc97;margin-left:4px">0%</span>
+      </div>
     </div>
+    <button id="btnMute">🔊</button>
     <div id="right" class="chip">
       <div class="lbl" style="margin:0">Do cao</div>
       <div id="alt" style="font-size:17px;font-weight:800">0 m</div>
@@ -71,15 +90,17 @@
     </div>
   </div>
   <div id="bottom">
-    <div id="hint">CHAM DE CHON GOC</div>
+    <div id="hint">KEO XUONG VA VE SAU, ROI THA</div>
     <div id="bar"><div id="barFill"></div></div>
   </div>
+  <button id="btnStop">DUNG &amp; GHI</button>
 </div>
 
 <div id="result">
   <div id="rDist">0</div>
   <div class="lbl" style="font-size:11px;letter-spacing:4px">met</div>
   <div class="lbl" style="margin-top:18px;font-size:11px">Ky luc <span id="rBest">0 m</span></div>
+  <div id="rWhy" class="lbl" style="margin-top:8px;font-size:10.5px;color:#ffb3ac"></div>
   <div id="rNew">KY LUC MOI!</div>
   <button class="go" id="btnAgain">PHONG LAI</button>
 </div>
@@ -95,6 +116,13 @@
   document.getElementById('btnAgain').addEventListener('click', e => {
     e.stopPropagation();
     if (window.__game) window.__game.resetRun();
+  });
+  // Nut DUNG: chan pointerdown lai de cu cham khong lot xuong canvas thanh dot nitro
+  const bs = document.getElementById('btnStop');
+  bs.addEventListener('pointerdown', e => e.stopPropagation());
+  bs.addEventListener('click', e => {
+    e.stopPropagation();
+    if (window.__game) window.__game.stopNow();
   });
 </script>
 </body>

@@ -6,6 +6,8 @@ export const TUNE = {
   /* --- the gioi --- */
   gravity:        -22,    // luc hut. Nho lai (-14) = bay lau hon, kieu mat trang
   worldLength:    3200,   // do dai dia hinh (met)
+  worldBack:      150,    // keo dai dia hinh ve phia sau vach xuat phat bao nhieu met.
+                          // Can co, neu khong thi luc ngam se thay ria dia hinh cat ngang man hinh.
   worldWidth:     150,    // be rong dia hinh
   segX:           480,    // so o luoi doc theo huong bay. Cao hon = dia hinh min hon, may nang hon
   segZ:           14,
@@ -15,13 +17,19 @@ export const TUNE = {
   hillWave:       78,     // buoc song doi. Nho lai = doi nhon, nay dien hon
   flatRunway:     45,     // doan phang o vach xuat phat
 
-  /* --- phong xe --- */
-  launchSpeed:    52,     // toc do phong co ban (m/s)
-  aimMin:         14,     // goc thap nhat (do)
-  aimMax:         72,     // goc cao nhat
-  aimSweep:       0.85,   // toc do quet kim ngam
-  powerSweep:     1.5,    // toc do chay thanh luc
-  powerFloor:     0.55,   // bam luc te nhat con lai bao nhieu %
+  /* --- phong xe kieu sling: keo va tha --- */
+  launchSpeed:    52,     // toc do phong khi keo cang toi da (m/s)
+  aimMin:         10,     // goc thap nhat (do)
+  aimMax:         78,     // goc cao nhat
+  pullMax:        190,    // keo bao nhieu diem tren man hinh la cang toi da.
+                          // Nho lai = nhay hon nhung kho chinh; to len = phai keo dai hon.
+  pullMin:        16,     // keo ngan hon nay thi khong tinh, tranh cham nham la ban mat
+  powerFloor:     0.35,   // keo it nhat van con bao nhieu % luc
+  bandWidth:      0.16,   // do day cua day sling tren hinh
+  slingHeight:    5.6,    // do cao cua tui sling so voi mat dat. Phai du cao, neu khong thi
+                          // keo xuong la xe chui xuong duoi dat.
+  slingSpan:      2.1,    // hai cot sling cach nhau bao nhieu
+  slingPull:      4.2,    // keo cang toi da thi xe lui ve sau bao nhieu met
 
   /* --- xe --- */
   chassis:        [1.55, 0.48, 0.82],  // nua kich thuoc than xe
@@ -67,24 +75,54 @@ export const TUNE = {
   maxSeconds:     35,
 
   /* --- camera --- */
-  camAim:         [-15.5, 4.2, 9.0],   // vi tri camera luc ngam, so voi xe
-  camFly:         [-8.0, 3.0, 17.0],   // vi tri camera luc bay: lech han sang ben de thay duoc vong cung
+  camAim:         [-18.0, 9.0, 13.0], // LUC NGAM: nhin tu ben canh, xe huong sang phai man hinh.
+                                      // Phai nhin tu ben moi keo sling duoc, keo tu sau duoi
+                                      // xe thi khong thay minh dang keo len hay keo xuong.
+  camAimLook:     [7, 0.5, 0],         // luc ngam thi ngam vao dau, so voi xe
+  camFly:         [-11.5, 3.3, 0],     // LUC BAY: dan ngay sau duoi xe. Z = 0 la ngay sau duoi.
+  camSide:        0.0,    // them do lech sang ben KHI DANG BAY.
+                          // 0 = dan sau duoi xe, kho hon, nhap vai hon.
+                          // 1 = lech han sang ben, de doc vong cung hon. 0.4 = lung chung.
+  camSideDist:    17,     // khi camSide = 1 thi lech sang ben bao nhieu met
   camFlyBlend:    1.1,    // bao nhieu giay de chuyen tu goc ngam sang goc bay
-  camFollow:      0.085,  // do muot cua camera. Nho = muot va tre hon
-  camAltPull:     0.05,   // bay cao thi keo camera ra xa bao nhieu
-  camPullY:       0.3,    // phan keo ra do ap vao chieu cao. De thap thi camera khong bi
+  camFollow:      0.1,    // do muot cua camera. Nho = muot va tre hon
+  camAltPull:     0.062,  // bay cao thi keo camera ra xa bao nhieu
+  camPullY:       0.32,   // phan keo ra do ap vao chieu cao. De thap thi camera khong bi
                           // chuc xuong nhin tu tren khi xe bay cao
-  camLookAhead:   0.32,   // nhin truoc theo huong bay
-  camLookUp:      4.2,    // nang diem ngam len, de duong chan troi khong bi tut xuong day
+  camLookAhead:   0.3,    // nhin truoc theo huong bay
+  camLookUp:      2.2,    // nang diem ngam len. Dat thap de camera hoi chuc xuong, nhin
+                          // duoc mat dat phia truoc qua noc xe
 
   /* --- hinh anh --- */
+  /* --- hieu ung (Giai doan 2) --- */
+  fxMax:          420,    // so hat toi da cung luc. Cao hon = day dac hon, may nang hon
+  dustPerImpact:  2.4,    // so hat bui sinh ra tren mot don vi luc va cham
+  impactMin:      4.5,    // va cham nhe hon nay thi khong tinh (m/s doi toc do)
+  shakeImpact:    0.5,    // rung camera moi don vi luc va cham
+  shakeLaunch:    9,      // rung camera luc phong
+  shakeMax:       26,     // gioi han rung, tranh nhin khong noi
+  shakeDecay:     6.5,    // rung tat nhanh cham the nao
+  fovBase:        60,     // goc mo camera luc dung yen
+  fovPerSpeed:    0.16,   // moi m/s thi mo them bao nhieu do. Tao cam giac toc do
+  fovMax:         76,
+  rollDustSpeed:  14,     // lan tren dat nhanh hon nay thi bat bui
+  volume:         0.55,   // am luong chung, 0 la tat het
+  windMax:        70,     // toc do ung voi tieng gio to nhat
+
   fogNear:        180,
   fogFar:         920,
   shadowSpan:     46,     // vung co bong do quanh xe
   sunOffset:      [-14, 96, 16],  // huong nang. Gan nhu tren dinh dau, de bong do nam ngay
                                   // duoi xe chu khong lech ra mot chuc, tranh nhin thay 2 bong
+  guideDots:      60,     // So hat cua duong ngam du bao. De 0 la tat.
+                          // Ve HET duong bay cho tan diem roi. Hat cuoi cung chinh la cho
+                          // xe se cham dat. O goc nhin ba phan tu, cac hat lui dan ve phia
+                          // duong chan troi nen doc duoc ca huong lan tam xa.
+  beaconPulse:    2.4,    // toc do nhay cua cot sang diem roi
+  beaconHeight:   22,     // chieu cao cot sang diem roi (met)
+  beaconGrow:     0.075,  // cot cao them theo khoang cach, de ban xa van thay ro
   trailPoints:    170,    // so diem toi da cua vet bay
-  trailSpacing:   1.6,    // cach nhau bao nhieu met thi tha 1 diem. Dat theo khoang cach
+  trailSpacing:   2.2,    // cach nhau bao nhieu met thi tha 1 diem. Dat theo khoang cach
                           // chu khong theo khung hinh, de vet luon deu du may nhanh hay cham
   blobRadius:     1.7,    // ban kinh dom bong doc do cao
   blobOpacity:    0.24

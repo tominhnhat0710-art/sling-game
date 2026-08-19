@@ -24,11 +24,13 @@ export const padX = i => T.padFirst + i * T.padEvery;
 
 export function buildTerrain(scene, RAPIER, world) {
   /* ---- luoi hinh anh ---- */
-  const geo = new THREE.PlaneGeometry(T.worldLength, T.worldWidth, T.segX, T.segZ);
+  const LEN = T.worldLength + T.worldBack;
+  const geo = new THREE.PlaneGeometry(LEN, T.worldWidth, T.segX, T.segZ);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i) + T.worldLength / 2;   // doi ve goc 0 o vach xuat phat
+    // doi goc toa do: x = 0 la vach xuat phat, phan am la doan keo dai ve phia sau
+    const x = pos.getX(i) + LEN / 2 - T.worldBack;
     const z = pos.getZ(i);
     pos.setX(i, x);
     pos.setY(i, heightAt(x, z));
