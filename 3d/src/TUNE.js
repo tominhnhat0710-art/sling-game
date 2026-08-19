@@ -44,13 +44,31 @@ export const TUNE = {
   susCompress:    1.6,
   susRelax:       2.6,
   frictionSlip:   2.4,    // do bam. Cao = it truot
-  linDamp:        0.02,   // can gio. Cao = mat toc do nhanh
+  bounceBase:     0.20,   // do nay cua than xe khi chua nang cap banh
+  linDamp:        0.05,   // can gio. Cao = mat toc do nhanh.
+                          // Phai du lon, neu khong thi nang cap Khi dong hoc khong co tac dung
+                          // gi do luon (da do thuc te: 0.02 thi cap 0 va cap 9 bay xa y het nhau).
   angDamp:        0.06,   // can quay. Cao = it lon nhao
+
+  /* --- tu can bang khi bay (de xe dap dat bang banh) --- */
+  autoLevel:      1.0,    // 0 = tat han, xe lon nhao tu do nhu truoc.
+                          // 1 = luon tu chinh lai de dap dat bang banh xe.
+  levelMaxPitch:  38,     // mui xe duoc chuc theo huong bay toi da bao nhieu do.
+                          // De thap thi xe gan nhu luon nam ngang.
+  levelGain:      4.2,    // luc chinh manh bao nhieu
+  levelDamp:      7.0,    // toc do bat kip huong muc tieu
+  levelRecover:   0.55,   // sau khi va cham thi mat bao nhieu giay moi chinh lai duoc.
+                          // Nho co do tre nay, dam vao dia hinh van bi lon nhao that su.
 
   /* --- nitro --- */
   nitroCount:     2,
   nitroPush:      19,     // cong bao nhieu m/s moi lan dot
   nitroLift:      0.35,   // ty le day len tren
+  nitroCooldown:  0.55,   // phai cho bao nhieu giay giua 2 lan dot.
+                          // Khong co cai nay thi len cap cao co the doc het 6 binh trong
+                          // 6 khung hinh lien, toc do no tung va game vo can bang.
+  speedCap:       150,    // gioi han toc do (m/s). Chan cho vat ly khong vo va xe khong
+                          // xuyen qua dia hinh khi bay qua nhanh.
 
   /* --- bang tang toc --- */
   padEvery:       185,    // khoang cach giua cac bang (met)
@@ -72,7 +90,7 @@ export const TUNE = {
   /* --- ket thuc luot --- */
   stopSpeed:      2.2,    // duoi toc do nay coi nhu da dung
   stopFrames:     40,
-  maxSeconds:     35,
+  maxSeconds:     60,
 
   /* --- camera --- */
   camAim:         [-18.0, 9.0, 13.0], // LUC NGAM: nhin tu ben canh, xe huong sang phai man hinh.
@@ -107,6 +125,7 @@ export const TUNE = {
   fovMax:         76,
   rollDustSpeed:  14,     // lan tren dat nhanh hon nay thi bat bui
   volume:         0.55,   // am luong chung, 0 la tat het
+  tienMoiMet:     1.0,    // 1 met bay duoc thi bao nhieu tien
   windMax:        70,     // toc do ung voi tieng gio to nhat
 
   fogNear:        180,

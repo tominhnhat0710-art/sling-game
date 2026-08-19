@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BAY XA 3D - Giai doan 2 - sling keo tha + bui, khoi, rung, am thanh - build 2026-08-19 -->
+<!-- BAY XA 3D v3.0 - Giai doan 3: tien, ga ra, nang cap - build 2026-08-19 -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -29,6 +29,7 @@
   #nitro{display:flex;gap:5px;justify-content:flex-end;margin-top:7px}
   .pip{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.2)}
   .pip.on{background:linear-gradient(135deg,#ffd166,#ff6b35);box-shadow:0 0 9px rgba(255,140,66,.8)}
+  .pip.cd{background:rgba(255,140,66,.35)}
 
   #bottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 86px);text-align:center}
   #hint{font-size:12px;font-weight:800;letter-spacing:2px;text-shadow:0 2px 10px rgba(0,0,0,.6);
@@ -46,7 +47,8 @@
   #rDist{font-size:76px;font-weight:900;line-height:.9;
     background:linear-gradient(100deg,#8affc1,#63d2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
   #rNew{color:#ffd166;font-size:12px;font-weight:800;letter-spacing:2.5px;margin-top:14px}
-  .go{pointer-events:auto;border:0;margin-top:26px;border-radius:15px;padding:16px 46px;
+  .go{pointer-events:auto;border:0;margin-top:14px;border-radius:15px;padding:16px 46px;
+    width:min(330px,84vw);align-self:center;
     font-size:17px;font-weight:900;letter-spacing:2px;font-family:inherit;
     background:linear-gradient(135deg,#ffd166,#ff7a3d);color:#2b1400;box-shadow:0 10px 28px rgba(255,122,61,.32)}
 
@@ -61,48 +63,112 @@
     font-family:inherit;font-size:12px;font-weight:900;letter-spacing:1.4px}
   #btnStop:active{background:rgba(255,90,80,.9);color:#2b0705}
 
+  .rows{margin:20px auto 4px;width:100%;max-width:330px}
+  .row{display:flex;justify-content:space-between;padding:9px 2px;font-size:14px;
+    border-bottom:1px solid rgba(255,255,255,.09)}
+  .row span{color:#9fb0d8}
+  .row b{font-weight:800}
+  .ghost{pointer-events:auto;border:1px solid rgba(255,255,255,.18);background:transparent;color:#c3cbe8;
+    width:min(330px,84vw);margin-top:10px;border-radius:14px;padding:13px;font-size:14px;font-weight:700;font-family:inherit}
+
+  #garage{position:fixed;inset:0;display:none;flex-direction:column;z-index:30;
+    padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 16px);
+    background:linear-gradient(170deg,#141c38 0%,#0d1326 55%,#080c18 100%)}
+  #garage.on{display:flex}
+  .logo{font-size:32px;font-weight:900;letter-spacing:3px;text-align:center;
+    background:linear-gradient(95deg,#ffd166,#ff8c42 55%,#ff5f6d);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{text-align:center;font-size:10.5px;letter-spacing:2px;color:#7f8bb5;margin-top:4px;text-transform:uppercase}
+  .stats{display:flex;gap:10px;margin:15px 0 11px}
+  .stat{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+    border-radius:14px;padding:9px 12px}
+  .stat b{display:block;font-size:19px;font-weight:800}
+  .stat span{font-size:9.5px;letter-spacing:1.2px;color:#8a96c0;text-transform:uppercase}
+  .list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px;padding-bottom:4px}
+  .up{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+  .up .ico{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:grid;place-items:center;
+    font-size:18px;background:rgba(255,255,255,.07)}
+  .up .mid{flex:1;min-width:0}
+  .up .nm{font-size:13.5px;font-weight:700}
+  .up .lv{color:#8a96c0;font-weight:600;font-size:12px}
+  .up .ds{font-size:10.5px;color:#8a96c0;margin-top:1px}
+  .pips{display:flex;gap:3px;margin-top:6px}
+  .upip{height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.12)}
+  .upip.f{background:linear-gradient(90deg,#ffd166,#ff8c42)}
+  .buy{flex:0 0 auto;border:0;border-radius:11px;padding:9px 11px;font-size:12px;font-weight:800;
+    background:linear-gradient(135deg,#3ddc97,#22b579);color:#03231a;font-family:inherit}
+  .buy:disabled{background:rgba(255,255,255,.08);color:#5d688f}
+  .buy.max{background:rgba(99,210,255,.14);color:#63d2ff}
+  .ghelp{text-align:center;font-size:10.5px;color:#69739c;margin-top:10px;line-height:1.5}
+  .reset{display:block;margin:8px auto 0;background:none;border:0;color:#4d5680;
+    font-size:10.5px;letter-spacing:.5px;font-family:inherit;text-decoration:underline}
+  @media (max-height:620px){
+    .logo{font-size:22px} .sub,.ghelp,.reset{display:none}
+    .stats{margin:9px 0 7px} .stat b{font-size:16px}
+    .go{padding:13px;font-size:16px}
+  }
+
   #loading{position:fixed;inset:0;display:grid;place-items:center;background:#0d1326;z-index:40;
     font-size:12px;letter-spacing:3px;color:#7f8bb5}
 </style>
 </head>
 <body>
 
-<div id="loading">DANG TAI...</div>
+<div id="loading">ĐANG TẢI...</div>
 
 <div id="hud">
   <div id="top">
     <div class="chip">
       <div><span id="dist">0</span> <span style="font-size:16px;font-weight:700;opacity:.75">m</span></div>
-      <div class="lbl">Ky luc <span id="bestHud">0</span> m</div>
+      <div class="lbl">Kỷ lục <span id="bestHud">0</span> m</div>
       <div id="angleBox" style="display:none;margin-top:7px;padding-top:7px;
            border-top:1px solid rgba(255,255,255,.14)">
-        <span class="lbl" style="margin:0">Goc</span>
+        <span class="lbl" style="margin:0">Góc</span>
         <span id="angle" style="font-size:18px;font-weight:900;color:#ffd166;margin-left:4px">0&deg;</span>
-        <span class="lbl" style="margin:0 0 0 9px">Luc</span>
+        <span class="lbl" style="margin:0 0 0 9px">Lực</span>
         <span id="pwr" style="font-size:18px;font-weight:900;color:#3ddc97;margin-left:4px">0%</span>
       </div>
     </div>
     <button id="btnMute">🔊</button>
     <div id="right" class="chip">
-      <div class="lbl" style="margin:0">Do cao</div>
+      <div class="lbl" style="margin:0">Độ cao</div>
       <div id="alt" style="font-size:17px;font-weight:800">0 m</div>
       <div id="nitro"><i class="pip"></i><i class="pip"></i></div>
     </div>
   </div>
   <div id="bottom">
-    <div id="hint">KEO XUONG VA VE SAU, ROI THA</div>
+    <div id="hint">KÉO XUỐNG VÀ VỀ SAU, RỒI THẢ</div>
     <div id="bar"><div id="barFill"></div></div>
   </div>
-  <button id="btnStop">DUNG &amp; GHI</button>
+  <button id="btnStop">DỪNG &amp; GHI</button>
+</div>
+
+<div id="garage">
+  <div class="logo">BAY XA</div>
+  <div class="sub">Phóng xe &middot; bay càng xa &middot; nâng cấp</div>
+  <div class="stats">
+    <div class="stat"><span>Tiền</span><b id="gTien" style="color:#ffd166">0</b></div>
+    <div class="stat"><span>Kỷ lục</span><b id="gKyLuc" style="color:#63d2ff">0 m</b></div>
+  </div>
+  <div class="list" id="gList"></div>
+  <button class="go" id="btnPhong">PHÓNG!</button>
+  <div class="ghelp">Kéo xuống và về sau rồi thả để bắn &middot; đang bay thì chạm để đốt nitro</div>
+  <button class="reset" id="btnXoa">Xoá tiến độ</button>
 </div>
 
 <div id="result">
   <div id="rDist">0</div>
-  <div class="lbl" style="font-size:11px;letter-spacing:4px">met</div>
-  <div class="lbl" style="margin-top:18px;font-size:11px">Ky luc <span id="rBest">0 m</span></div>
+  <div class="lbl" style="font-size:11px;letter-spacing:4px">mét</div>
+  <div class="rows">
+    <div class="row"><span>Kỷ lục</span><b id="rBest">0 m</b></div>
+    <div class="row"><span>Tiền kiếm được</span><b id="rEarn" style="color:#3ddc97">+0</b></div>
+    <div class="row"><span>Tiền đang có</span><b id="rBank" style="color:#ffd166">0</b></div>
+  </div>
   <div id="rWhy" class="lbl" style="margin-top:8px;font-size:10.5px;color:#ffb3ac"></div>
-  <div id="rNew">KY LUC MOI!</div>
-  <button class="go" id="btnAgain">PHONG LAI</button>
+  <div id="rNew">KỶ LỤC MỚI!</div>
+  <button class="go" id="btnAgain">PHÓNG LẠI</button>
+  <button class="ghost" id="btnVeGara">Về ga ra nâng cấp</button>
 </div>
 
 <script type="importmap">

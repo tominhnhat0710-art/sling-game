@@ -6,6 +6,8 @@ import { buildCar, syncCar, wheelPos } from './car.js';
 import { ChaseCam } from './camera.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
+import { UPGRADES, giaCap } from './upgrades.js';
+import * as SAVE from './save.js';
 
 const $ = id => document.getElementById(id);
 const AIM = 0, FLY = 2, DONE = 3;
@@ -67,6 +69,8 @@ const car = buildCar(scene, RAPIER, world, START_X, heightAt(START_X, 0) + T.sli
 const chase = new ChaseCam(cam);
 const fx = new Fx(scene);
 const audio = new Audio();
+SAVE.load();
+let CS = SAVE.chiSo();          // chi so xe hien tai, tinh lai sau moi lan nang cap
 
 /* --- duong ngam du bao --- */
 const dotGeo = new THREE.SphereGeometry(0.34, 7, 5);
@@ -126,14 +130,21 @@ const trailPts = [];
 let phase = AIM;
 let aimA = deg(42), power = 0;
 let dragging = false, dragSx = 0, dragSy = 0, dragX = 0, dragY = 0;
-let nitroLeft = T.nitroCount, maxX = START_X, stillFor = 0, elapsed = 0, best = 0, doneAt = 0;
+let nitroLeft = T.nitroCount, maxX = START_X, stillFor = 0, elapsed = 0, doneAt = 0;
+let menuOpen = true, levelSuspend = 0, firstLandUp = null, nitroCd = 0;
 let pv = { x: 0, y: 0, z: 0 }, impactSkip = 0, rollTick = 0;
 const m4 = new THREE.Matrix4(), q1 = new THREE.Quaternion(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
 const UPV = new THREE.Vector3(0, 1, 0);
 
 function resetRun() {
   phase = AIM; aimA = deg(42); power = 0; dragging = false;
-  nitroLeft = T.nitroCount; maxX = START_X; stillFor = 0; elapsed = 0;
+  CS = SAVE.chiSo();
+  firstLandUp = null; nitroCd = 0;
+  nitroLeft = CS.soNitro; maxX = START_X; stillFor = 0; elapsed = 0; levelSuspend = 0;
+  car.body.setLinearDamping(CS.canGio);
+  car.col.setRestitution(CS.doNay);
+  for (let i = 0; i < 4; i++) car.vc.setWheelFrictionSlip(i, CS.bamDuong);
+  veNitroPip();
   trailPts.length = 0; trail.count = 0; lastTrail = null;
   fx.clear();
   car.body.setTranslation({ x: START_X, y: heightAt(START_X, 0) + T.slingHeight, z: 0 }, true);
@@ -169,7 +180,7 @@ function updateAimFromDrag() {
 }
 
 function launchSpeedNow() {
-  return T.launchSpeed * (T.powerFloor + (1 - T.powerFloor) * power);
+  return CS.tocDoPhong * (T.powerFloor + (1 - T.powerFloor) * power);
 }
 
 function doLaunch() {
@@ -188,14 +199,15 @@ function doLaunch() {
 }
 
 function fireNitro() {
-  if (nitroLeft <= 0) return;
+  if (nitroLeft <= 0 || nitroCd > 0) return;
   nitroLeft--;
+  nitroCd = T.nitroCooldown;
   const v = car.body.linvel(), p = car.body.translation();
   const s = Math.hypot(v.x, v.y, v.z) || 1;
   const dx = s > 2 ? v.x / s : 1, dy = s > 2 ? v.y / s : 0.3;
   car.body.setLinvel({
-    x: v.x + dx * T.nitroPush,
-    y: v.y + Math.max(T.nitroLift, dy) * T.nitroPush * 0.8,
+    x: v.x + dx * CS.sucNitro,
+    y: v.y + Math.max(T.nitroLift, dy) * CS.sucNitro * 0.8,
     z: v.z * 0.6
   }, true);
   impactSkip = 3;
@@ -210,6 +222,7 @@ function fireNitro() {
 /* =================== DIEU KHIEN =================== */
 function onDown(e) {
   audio.init();
+  if (menuOpen) return;
   if (phase === AIM) {
     dragging = true;
     dragSx = dragX = e.clientX; dragSy = dragY = e.clientY;
@@ -242,6 +255,7 @@ addEventListener('pointercancel', () => { dragging = false; power = 0; });
 addEventListener('keydown', e => {
   if (e.code !== 'Space' && e.code !== 'Enter') return;
   e.preventDefault(); audio.init();
+  if (menuOpen) return;
   if (phase === AIM) { power = 1; doLaunch(); }
   else if (phase === FLY) fireNitro();
   else if (phase === DONE && performance.now() - doneAt > 800) resetRun();
@@ -263,6 +277,15 @@ function stepPhysics(dt) {
   if (phase !== FLY) return;
   pushTrail();
   elapsed += dt;
+  if (nitroCd > 0) nitroCd -= dt;
+  {
+    const vv = car.body.linvel();
+    const sp0 = Math.hypot(vv.x, vv.y, vv.z);
+    if (sp0 > T.speedCap) {
+      const k0 = T.speedCap / sp0;
+      car.body.setLinvel({ x: vv.x * k0, y: vv.y * k0, z: vv.z * k0 }, true);
+    }
+  }
   const p = car.body.translation(), v = car.body.linvel();
   if (p.x > maxX) maxX = p.x;
 
@@ -275,6 +298,12 @@ function stepPhysics(dt) {
              { color: 0xa8965f, spread: dv * 0.55, up: dv * 0.5, life: 0.9, size: 1.7 });
     chase.addShake(dv * T.shakeImpact);
     audio.thud(dv);
+    levelSuspend = T.levelRecover;
+    if (firstLandUp === null) {
+      const r0 = car.body.rotation();
+      const up0 = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(r0.x, r0.y, r0.z, r0.w));
+      firstLandUp = +up0.y.toFixed(2);      // 1 = banh xuong dat, -1 = nam ngua
+    }
   }
   pv = { x: v.x, y: v.y, z: v.z };
 
@@ -283,8 +312,20 @@ function stepPhysics(dt) {
   for (let i = 0; i < 4; i++) if (car.vc.wheelIsInContact(i)) { touching = true; break; }
   const grounded = alt < T.groundAlt || touching;
 
+  /* Tu can bang: khi dang bay tu do thi xoay xe ve the dap dat bang banh.
+     Sau moi va cham thi tam ngung levelRecover giay, nen dam vao dia hinh
+     van bi lon nhao that, chi la sau do xe tu chinh lai duoc. */
+  if (levelSuspend > 0) levelSuspend -= dt;
+  if (T.autoLevel > 0 && !grounded && levelSuspend <= 0) tuCanBang(dt, v);
+
+  /* Nang cap Khi dong hoc: xe luon, tuc la bu lai mot phan trong luc khi dang bay. */
+  if (!grounded && CS.luon > 0) {
+    const vv2 = car.body.linvel();
+    car.body.setLinvel({ x: vv2.x, y: vv2.y - T.gravity * CS.luon * dt, z: vv2.z }, true);
+  }
+
   if (grounded) {
-    const d = 1 - T.groundDrag;
+    const d = 1 - CS.maSatLan;
     car.body.setLinvel({ x: v.x * d, y: v.y, z: v.z * d }, true);
     // bui bay ra khi lan nhanh
     const sp2 = Math.hypot(v.x, v.z);
@@ -306,8 +347,8 @@ function stepPhysics(dt) {
       pd.used = true;
       pd.mat.color.setHex(0x6a7d74); pd.mat.emissive.setHex(0x000000);
       const vv = car.body.linvel();
-      car.body.setLinvel({ x: vv.x * (1 + T.padGain * f), y: Math.abs(vv.y) * 0.35 + T.padLift * f, z: vv.z }, true);
-      impactSkip = 3;
+      car.body.setLinvel({ x: vv.x * (1 + T.padGain * f * CS.heSoBang), y: Math.abs(vv.y) * 0.35 + T.padLift * f * CS.heSoBang, z: vv.z }, true);
+      impactSkip = 3; levelSuspend = T.levelRecover * 0.6;
       fx.burst(pd.x, heightAt(pd.x, 0) + 0.6, 0, 30,
                { color: 0x3ddc97, spread: 7, up: 16, life: 0.9, size: 2.0, grav: -9 });
       chase.addShake(11); audio.pad();
@@ -320,6 +361,38 @@ function stepPhysics(dt) {
   if (stillFor > T.stopFrames || elapsed > T.maxSeconds) finish();
 }
 
+const qTarget = new THREE.Quaternion(), qCur = new THREE.Quaternion(), qErr = new THREE.Quaternion();
+const eTarget = new THREE.Euler();
+function tuCanBang(dt, v) {
+  // Huong muc tieu: mui xe chia theo huong bay, nhung gioi han do chuc mui,
+  // de xe khong bao gio nam ngua hay chui dau xuong.
+  const maxP = deg(T.levelMaxPitch);
+  let pitch = 0;
+  if (v.x > 1) pitch = Math.max(-maxP, Math.min(maxP, Math.atan2(v.y, v.x)));
+  eTarget.set(0, 0, pitch);
+  qTarget.setFromEuler(eTarget);
+
+  const r = car.body.rotation();
+  qCur.set(r.x, r.y, r.z, r.w);
+  qErr.copy(qTarget).multiply(qCur.invert());
+  if (qErr.w < 0) qErr.set(-qErr.x, -qErr.y, -qErr.z, -qErr.w);
+
+  const sn = Math.sqrt(Math.max(0, 1 - qErr.w * qErr.w));
+  let wx = 0, wy = 0, wz = 0;
+  if (sn > 1e-4) {
+    const ang = 2 * Math.acos(Math.min(1, qErr.w));
+    const k = T.levelGain * T.autoLevel * ang / sn;
+    wx = qErr.x * k; wy = qErr.y * k; wz = qErr.z * k;
+  }
+  const av = car.body.angvel();
+  const b = Math.min(1, T.levelDamp * dt);
+  car.body.setAngvel({
+    x: av.x + (wx - av.x) * b,
+    y: av.y + (wy - av.y) * b,
+    z: av.z + (wz - av.z) * b
+  }, true);
+}
+
 function finish(stoppedByPlayer = false) {
   phase = DONE;
   doneAt = performance.now();
@@ -327,10 +400,17 @@ function finish(stoppedByPlayer = false) {
   $('btnStop').style.display = 'none';
   audio.setWind(0);
   const m = Math.max(0, Math.round(maxX - START_X));
-  const isBest = m > best; if (isBest) best = m;
-  $('rDist').textContent = m.toLocaleString('en-US');
-  $('rBest').textContent = best.toLocaleString('en-US') + ' m';
-  $('rWhy').textContent = stoppedByPlayer ? 'Ban tu bam dung' : '';
+  const thuong = Math.round(m * T.tienMoiMet * CS.heSoTien);
+  SAVE.save.tien += thuong;
+  SAVE.save.soLuot++;
+  const isBest = m > SAVE.save.kyLuc;
+  if (isBest) SAVE.save.kyLuc = m;
+  SAVE.ghi();
+  $('rDist').textContent = m.toLocaleString('vi-VN');
+  $('rBest').textContent = SAVE.save.kyLuc.toLocaleString('vi-VN') + ' m';
+  $('rEarn').textContent = '+' + thuong.toLocaleString('vi-VN');
+  $('rBank').textContent = SAVE.save.tien.toLocaleString('vi-VN');
+  $('rWhy').textContent = stoppedByPlayer ? 'Bạn tự bấm dừng' : '';
   $('rNew').style.display = isBest ? 'block' : 'none';
   if (isBest) audio.best();
   setTimeout(() => $('result').classList.add('on'), 600);
@@ -442,23 +522,30 @@ function pushTrail() {
   trail.instanceMatrix.needsUpdate = true;
 }
 
+function veNitroPip() {
+  const box = $('nitro');
+  box.innerHTML = '';
+  for (let i = 0; i < CS.soNitro; i++) box.appendChild(document.createElement('i'));
+}
+
 function updateHud() {
   const p = car.body.translation();
-  $('dist').textContent = Math.max(0, Math.round(Math.max(maxX, p.x) - START_X)).toLocaleString('en-US');
-  $('bestHud').textContent = best.toLocaleString('en-US');
+  $('dist').textContent = Math.max(0, Math.round(Math.max(maxX, p.x) - START_X)).toLocaleString('vi-VN');
+  $('bestHud').textContent = SAVE.save.kyLuc.toLocaleString('vi-VN');
   const pips = $('nitro').children;
-  for (let i = 0; i < pips.length; i++) pips[i].className = 'pip' + (i < nitroLeft ? ' on' : '');
+  for (let i = 0; i < pips.length; i++)
+    pips[i].className = 'pip' + (i < nitroLeft ? (nitroCd > 0 ? ' cd' : ' on') : '');
   $('bar').style.display = dragging ? 'block' : 'none';
   if (dragging) $('barFill').style.width = (power * 100) + '%';
   $('btnStop').style.display = phase === FLY ? 'block' : 'none';
-  $('angleBox').style.display = phase === AIM ? 'block' : 'none';
-  if (phase === AIM) {
+  $('angleBox').style.display = (phase === AIM && !menuOpen) ? 'block' : 'none';
+  if (phase === AIM && !menuOpen) {
     $('angle').textContent = Math.round(aimA * 180 / Math.PI) + '°';
     $('pwr').textContent = Math.round(power * 100) + '%';
   }
-  $('hint').textContent = phase === AIM
-    ? (dragging ? 'THA RA DE BAN' : 'KEO XUONG VA VE SAU, ROI THA')
-    : (phase === FLY && nitroLeft > 0 ? 'CHAM DE DOT NITRO' : '');
+  $('hint').textContent = menuOpen ? '' : (phase === AIM
+    ? (dragging ? 'THẢ RA ĐỂ BẮN' : 'KÉO XUỐNG VÀ VỀ SAU, RỒI THẢ')
+    : (phase === FLY && nitroLeft > 0 ? 'CHẠM ĐỂ ĐỐT NITRO' : ''));
   $('alt').textContent = Math.max(0, Math.round(p.y - heightAt(p.x, p.z))) + ' m';
 }
 
@@ -511,6 +598,75 @@ function loop(ts) {
   requestAnimationFrame(loop);
 }
 
+/* =================== GA RA =================== */
+function veGaRa() {
+  CS = SAVE.chiSo();
+  $('gTien').textContent = SAVE.save.tien.toLocaleString('vi-VN');
+  $('gKyLuc').textContent = SAVE.save.kyLuc.toLocaleString('vi-VN') + ' m';
+  const list = $('gList');
+  list.innerHTML = '';
+  for (const u of UPGRADES) {
+    const lv = SAVE.save.lv[u.key];
+    const het = lv >= u.max;
+    const gia = giaCap(u, lv);
+    const el = document.createElement('div');
+    el.className = 'up';
+    let pips = '';
+    for (let i = 0; i < u.max; i++) pips += '<i class="upip' + (i < lv ? ' f' : '') + '"></i>';
+    el.innerHTML = '<div class="ico">' + u.ico + '</div>' +
+      '<div class="mid"><div class="nm">' + u.ten + ' <span class="lv">Cấp ' + lv + '</span></div>' +
+      '<div class="ds">' + u.mota + '</div><div class="pips">' + pips + '</div></div>';
+    const b = document.createElement('button');
+    b.className = 'buy' + (het ? ' max' : '');
+    b.textContent = het ? 'TỐI ĐA' : gia.toLocaleString('vi-VN');
+    b.disabled = het || SAVE.save.tien < gia;
+    b.addEventListener('pointerdown', ev => ev.stopPropagation());
+    b.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (het || SAVE.save.tien < gia) return;
+      SAVE.save.tien -= gia;
+      SAVE.save.lv[u.key]++;
+      SAVE.ghi();
+      audio.init(); audio.pad();
+      veGaRa();
+    });
+    el.appendChild(b);
+    list.appendChild(el);
+  }
+}
+
+function moGaRa() {
+  menuOpen = true;
+  resetRun();
+  veGaRa();
+  $('result').classList.remove('on');
+  $('garage').classList.add('on');
+}
+
+function dongGaRa() {
+  $('garage').classList.remove('on');
+  menuOpen = false;
+  resetRun();
+}
+
+$('btnPhong').addEventListener('click', e => { e.stopPropagation(); audio.init(); dongGaRa(); });
+$('btnPhong').addEventListener('pointerdown', e => e.stopPropagation());
+$('btnVeGara').addEventListener('click', e => { e.stopPropagation(); moGaRa(); });
+$('btnVeGara').addEventListener('pointerdown', e => e.stopPropagation());
+let xoaSan = 0;
+$('btnXoa').addEventListener('pointerdown', e => e.stopPropagation());
+$('btnXoa').addEventListener('click', e => {
+  e.stopPropagation();
+  const b = $('btnXoa');
+  if (!xoaSan) {
+    xoaSan = 1; b.textContent = 'Chạm lần nữa để xoá thật'; b.style.color = '#ff6b6b';
+    setTimeout(() => { xoaSan = 0; b.textContent = 'Xoá tiến độ'; b.style.color = ''; }, 3000);
+    return;
+  }
+  xoaSan = 0; b.textContent = 'Xoá tiến độ'; b.style.color = '';
+  SAVE.xoaHet(); veGaRa();
+});
+
 /* --- nut tat tieng --- */
 let muted = false;
 $('btnMute').addEventListener('click', e => {
@@ -522,12 +678,16 @@ $('btnMute').addEventListener('click', e => {
 $('btnMute').addEventListener('pointerdown', e => e.stopPropagation());
 
 resetRun();
+moGaRa();
 $('loading').style.display = 'none';
 requestAnimationFrame(loop);
 
 /* --- cong de test tu dong --- */
 window.__game = {
-  get phase() { return phase; }, get maxX() { return maxX; }, get best() { return best; },
+  get phase() { return phase; }, get maxX() { return maxX; },
+  get best() { return SAVE.save.kyLuc; }, get tien() { return SAVE.save.tien; },
+  get menuOpen() { return menuOpen; }, get lv() { return SAVE.save.lv; },
+  get firstLandUp() { return firstLandUp; },
   get nitroLeft() { return nitroLeft; }, get elapsed() { return elapsed; },
   get stillFor() { return stillFor; }, get power() { return power; },
   get angleDeg() { return aimA * 180 / Math.PI; },
@@ -540,7 +700,11 @@ window.__game = {
   get carPos() { const p = car.body.translation(); return { x: p.x, y: p.y, z: p.z }; },
   get groundUnderCar() { const p = car.body.translation(); return heightAt(p.x, p.z); },
   get landingX() { return predictLanding(); },
-  resetRun, fireNitro,
+  resetRun, fireNitro, moGaRa, dongGaRa, veGaRa,
+  setLv(k, v) { SAVE.save.lv[k] = v; CS = SAVE.chiSo(); },
+  setAutoLevel(v) { T.autoLevel = v; },
+  get heSoTien() { return CS.heSoTien; }, UPGRADES, giaCap,
+  setTien(v) { SAVE.save.tien = v; },
   setCam(aim, look) { if (aim) T.camAim = aim; if (look) T.camAimLook = look; chase.reset(car.body.translation()); },
   setDots(n) { T.guideDots = n; },
   beaconScreen() {
@@ -559,18 +723,27 @@ window.__game = {
   },
   setPull(dx, dy) { dragging = true; dragSx = 200; dragSy = 400; dragX = 200 + dx; dragY = 400 + dy; updateAimFromDrag(); dragging = false; },
   simulate(dx, dy, nitroAtApex = true) {
+    menuOpen = false;
     resetRun();
     this.dragLaunch(dx, dy);
     let n = 0, fired = 0;
     while (phase === FLY && n < 6000) {
-      if (nitroAtApex && nitroLeft > 0) {
+      if (nitroAtApex && nitroLeft > 0 && nitroCd <= 0) {
         const v = car.body.linvel(), p = car.body.translation();
-        if (v.y < 0 && (p.y - heightAt(p.x, p.z)) > 12) { fireNitro(); fired++; }
+        const alt0 = p.y - heightAt(p.x, p.z);
+        const sp0 = Math.hypot(v.x, v.y, v.z);
+        // giong nguoi choi biet choi: dot luc bat dau roi, va dot tiep khi dang lan cham dan
+        if ((v.y < 0 && alt0 > 12) || (alt0 < T.groundAlt && sp0 < 26)) { fireNitro(); fired++; }
       }
       stepPhysics(world.timestep); n++;
     }
     return { m: Math.max(0, Math.round(maxX - START_X)), seconds: +(n / 60).toFixed(1),
              angle: Math.round(aimA * 180 / Math.PI), power: +power.toFixed(2),
-             nitroFired: fired, padsUsed: terrain.pads.filter(q => q.used).length, ended: phase === DONE };
+             nitroFired: fired, padsUsed: terrain.pads.filter(q => q.used).length, ended: phase === DONE,
+             firstLandUp,
+             upright: (() => { const r = car.body.rotation();
+               const qq = new THREE.Quaternion(r.x, r.y, r.z, r.w);
+               const up = new THREE.Vector3(0, 1, 0).applyQuaternion(qq);
+               return +up.y.toFixed(2); })() };
   }
 };
