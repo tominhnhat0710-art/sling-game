@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<!-- BAY XA v1.0.0 - build 2026-08-19 -->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bay Xa">
+<meta name="theme-color" content="#0d1326">
+<title>BAY XA</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0d1326;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:#fff; touch-action:none; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  #c { display:block; width:100%; height:100%; }
+
+  .screen { position:fixed; inset:0; display:none; flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px);
+    background:linear-gradient(170deg,#141c38 0%,#0d1326 55%,#080c18 100%); z-index:10; }
+  .screen.on { display:flex; }
+
+  .logo { font-size:34px; font-weight:900; letter-spacing:3px; text-align:center;
+    background:linear-gradient(95deg,#ffd166,#ff8c42 55%,#ff5f6d);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { text-align:center; font-size:11px; letter-spacing:2.5px; color:#7f8bb5; margin-top:4px; text-transform:uppercase; }
+
+  .stats { display:flex; gap:10px; margin:16px 0 12px; }
+  .stat { flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
+    border-radius:14px; padding:10px 12px; }
+  .stat b { display:block; font-size:19px; font-weight:800; }
+  .stat span { font-size:10px; letter-spacing:1.2px; color:#8a96c0; text-transform:uppercase; }
+  .cash b { color:#ffd166; }
+  .best b { color:#63d2ff; }
+
+  .list { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:9px; padding-bottom:6px; }
+  .up { background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08);
+    border-radius:14px; padding:11px 13px; display:flex; align-items:center; gap:11px; }
+  .up .ico { width:36px; height:36px; flex:0 0 36px; border-radius:11px; display:grid; place-items:center; font-size:19px;
+    background:rgba(255,255,255,.07); }
+  .up .mid { flex:1; min-width:0; }
+  .up .nm { font-size:14px; font-weight:700; }
+  .up .ds { font-size:10.5px; color:#8a96c0; margin-top:1px; }
+  .pips { display:flex; gap:3px; margin-top:6px; }
+  .pip { height:4px; flex:1; border-radius:2px; background:rgba(255,255,255,.12); }
+  .pip.f { background:linear-gradient(90deg,#ffd166,#ff8c42); }
+  .buy { flex:0 0 auto; border:0; border-radius:11px; padding:9px 12px; font-size:12px; font-weight:800;
+    background:linear-gradient(135deg,#3ddc97,#22b579); color:#03231a; font-family:inherit; }
+  .buy:disabled { background:rgba(255,255,255,.08); color:#5d688f; }
+  .buy.max { background:rgba(99,210,255,.14); color:#63d2ff; }
+
+  .go { border:0; width:100%; margin-top:12px; border-radius:16px; padding:17px;
+    font-size:19px; font-weight:900; letter-spacing:2px; font-family:inherit;
+    background:linear-gradient(135deg,#ffd166,#ff7a3d); color:#2b1400;
+    box-shadow:0 10px 26px rgba(255,122,61,.3); }
+  .ghost { border:1px solid rgba(255,255,255,.16); background:transparent; color:#c3cbe8;
+    width:100%; margin-top:9px; border-radius:14px; padding:13px; font-size:14px; font-weight:700; font-family:inherit; }
+
+  #result { justify-content:center; text-align:center; }
+  #result .big { font-size:56px; font-weight:900; line-height:1;
+    background:linear-gradient(95deg,#63d2ff,#8affc1); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #result .unit { font-size:12px; letter-spacing:3px; color:#8a96c0; margin-top:6px; text-transform:uppercase; }
+  .rows { margin:22px auto 6px; width:100%; max-width:330px; }
+  .row { display:flex; justify-content:space-between; padding:10px 2px; font-size:14px;
+    border-bottom:1px solid rgba(255,255,255,.07); }
+  .row span { color:#8a96c0; }
+  .row b { font-weight:800; }
+  .newbest { color:#ffd166; font-size:12px; font-weight:800; letter-spacing:2px; margin:16px 0 4px; }
+  .hint { text-align:center; font-size:11px; color:#69739c; margin-top:14px; line-height:1.6; }
+  .reset { display:block; margin:10px auto 0; background:none; border:0; color:#4d5680;
+    font-size:10.5px; letter-spacing:1px; font-family:inherit; text-decoration:underline; }
+  @media (max-height:560px) {
+    .logo { font-size:22px; } .sub, .hint, .reset { display:none; }
+    .stats { margin:10px 0 8px; } .stat b { font-size:16px; }
+    .go { padding:13px; font-size:16px; margin-top:8px; }
+    .screen { padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px); }
+  }
+</style>
+</head>
+<body>
+<div id="safe" style="position:fixed;top:0;left:0;width:1px;height:0;padding-top:env(safe-area-inset-top);pointer-events:none"></div>
+<canvas id="c"></canvas>
+
+<!-- ============ GARA (man hinh chinh) ============ -->
+<div id="garage" class="screen on">
+  <div class="logo">BAY XA</div>
+  <div class="sub">Phong xe &middot; bay xa &middot; nang cap</div>
+  <div class="stats">
+    <div class="stat cash"><span>Tien</span><b id="gCash">0</b></div>
+    <div class="stat best"><span>Ky luc</span><b id="gBest">0 m</b></div>
+  </div>
+  <div class="list" id="gList"></div>
+  <button class="go" id="btnLaunch">PHONG!</button>
+  <div class="hint">Cham 1 lan de chon goc &middot; cham lan 2 de chon luc<br>Dang bay: cham de dot nitro</div>
+  <button class="reset" id="btnReset">Xoa tien do</button>
+  <div style="text-align:center;font-size:9.5px;color:#39406322;color:#394063;letter-spacing:1px;margin-top:6px">v1.0.0</div>
+</div>
+
+<!-- ============ KET QUA ============ -->
+<div id="result" class="screen">
+  <div class="big" id="rDist">0</div>
+  <div class="unit">met</div>
+  <div class="rows">
+    <div class="row"><span>Tien tu khoang cach</span><b id="rDistCash">0</b></div>
+    <div class="row"><span>Xu thu duoc</span><b id="rCoins">0</b></div>
+    <div class="row"><span>Tong kiem duoc</span><b id="rTotal" style="color:#3ddc97">0</b></div>
+    <div class="row"><span>Tien dang co</span><b id="rBank" style="color:#ffd166">0</b></div>
+  </div>
+  <div class="newbest" id="rBest" style="display:none">KY LUC MOI!</div>
+  <button class="go" id="btnAgain">PHONG LAI</button>
+  <button class="ghost" id="btnGarage">Ve gara nang cap</button>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   BAY XA - game phong xe, bay cang xa cang nhieu tien, lay tien nang cap xe.
+   Toan bo game nam trong 1 file nay. Khong quang cao, khong theo doi.
+
+   MUON CHOI KHAC DI? Sua cac so trong khoi TUNE ngay ben duoi roi luu lai.
+   So to hon = manh hon. Sua sai thi tai lai file goc la xong.
+   ========================================================================== */
+
+const TUNE = {
+  gravity:        0.42,   // luc hut trai dat. Nho lai = bay lau hon
+  baseLaunch:     17.0,   // suc phong khi chua nang cap
+  launchPerLevel:  2.5,   // moi cap "Suc phong" cong them bao nhieu
+  baseBounce:     0.42,   // do nay khi cham dat (0 = khong nay, 0.9 = nay rat cao)
+  bouncePerLevel: 0.055,
+  baseDrag:      0.0034,  // can gio. Nho lai = giu toc do lau hon
+  dragPerLevel:  0.00030,
+  nitroBase:         1,   // so lan nitro moi luot khi chua nang cap
+  nitroPowerBase:  6.2,   // suc day cua 1 lan nitro
+  nitroPowerPerLv: 1.25,
+  groundFriction: 0.007,  // ma sat khi lan tren dat
+  frictionPerWheel: 0.055, // moi cap banh xe giam bao nhieu ma sat
+  gripPerWheel:   0.075,  // banh xe tot thi an bang tang toc manh hon
+  padGain:        0.26,   // bang tang toc dau tien cong 26% toc do
+  padDecay:       0.72,   // moi bang tiep theo chi con 72% suc cua bang truoc
+  coinBase:         14,   // 1 xu = bao nhieu tien
+  coinPerLevel:      9,
+  cashPerMetre:    1.0,   // 1 met = bao nhieu tien
+  metresPerUnit:   0.1    // doi don vi trong game sang "met"
+};
+
+/* --------- Danh sach nang cap --------- */
+const UPGRADES = [
+  { key:'power',  ico:'\u{1F680}', nm:'Suc phong',      ds:'Ban xe di manh hon ngay tu dau',  max:14, c0:70,  gr:1.42 },
+  { key:'wheels', ico:'\u{1F6DE}', nm:'Banh xe',        ds:'Nay cao hon, lan xa hon',         max:10, c0:90,  gr:1.46 },
+  { key:'aero',   ico:'\u{1F4A8}', nm:'Khi dong hoc',   ds:'It can gio, giu toc do lau hon',  max:9,  c0:120, gr:1.5  },
+  { key:'nitro',  ico:'\u{1F525}', nm:'So binh nitro',  ds:'Them luot tang toc giua khong',   max:6,  c0:200, gr:1.85 },
+  { key:'npow',   ico:'\u{26A1}',  nm:'Suc nitro',      ds:'Moi lan dot nitro manh hon',      max:9,  c0:150, gr:1.5  },
+  { key:'coins',  ico:'\u{1FA99}', nm:'Gia tri xu',     ds:'Xu tren duong dang gia hon',      max:9,  c0:110, gr:1.44 }
+];
+const costOf = (u, lv) => Math.round(u.c0 * Math.pow(u.gr, lv) / 5) * 5;
+
+/* --------- Luu tien do (an toan neu trinh duyet chan localStorage) --------- */
+const KEY = 'bayxa.save.v1';
+let save = { cash:0, best:0, runs:0, lv:{} };
+UPGRADES.forEach(u => save.lv[u.key] = 0);
+try {
+  const raw = localStorage.getItem(KEY);
+  if (raw) { const d = JSON.parse(raw); save = Object.assign(save, d); UPGRADES.forEach(u => { if (typeof save.lv[u.key] !== 'number') save.lv[u.key] = 0; }); }
+} catch (e) { /* khong luu duoc thi van choi duoc, chi la mat tien do khi dong app */ }
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {} }
+
+/* --------- Chi so xe sau nang cap --------- */
+const S = () => ({
+  launch:  TUNE.baseLaunch + TUNE.launchPerLevel * save.lv.power,
+  bounce:  Math.min(0.82, TUNE.baseBounce + TUNE.bouncePerLevel * save.lv.wheels),
+  drag:    Math.max(0.0004, TUNE.baseDrag - TUNE.dragPerLevel * save.lv.aero),
+  nitroN:  TUNE.nitroBase + save.lv.nitro,
+  nitroP:  TUNE.nitroPowerBase + TUNE.nitroPowerPerLv * save.lv.npow,
+  roll:    TUNE.groundFriction * Math.max(0.35, 1 - TUNE.frictionPerWheel * save.lv.wheels),
+  grip:    1 + TUNE.gripPerWheel * save.lv.wheels,
+  coinVal: TUNE.coinBase + TUNE.coinPerLevel * save.lv.coins
+});
+
+/* ==================== CANVAS ==================== */
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+let safeTop = 0;
+function readSafe(){ const el=document.getElementById('safe'); safeTop = el ? el.getBoundingClientRect().height : 0; }
+window.addEventListener('resize', () => { resize(); readSafe(); });
+window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+
+/* ==================== DIA HINH ==================== */
+// rnd(i): so "ngau nhien" nhung on dinh, cung i luon cho cung ket qua
+function rnd(i) { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+function ground(x) {
+  if (x < 0) return 0;
+  const ease = Math.min(1, Math.max(0, (x - 300) / 800));   // doan chay da dau tien phang
+  const h = 46 * Math.sin(x / 330) + 27 * Math.sin(x / 141 + 1.3) + 13 * Math.sin(x / 63 + 2.2);
+  return h * ease;
+}
+function slopeAt(x) { const d = 3; return (ground(x + d) - ground(x - d)) / (2 * d); }
+function padX(i)  { return i === 0 ? 700 : 700 + i * 1250 + rnd(i + 31) * 550; }
+function coinAt(i){ const x = 380 + i * 205 + rnd(i + 99) * 120; return { x, y: ground(x) + 30 + rnd(i + 7) * 135 }; }
+
+/* ==================== TRANG THAI ==================== */
+const AIM = 0, POWER = 1, FLY = 2, DONE = 3;
+let phase = AIM, playing = false;
+const car = { x:0, y:0, vx:0, vy:0, ang:0, av:0, on:false };
+let aimA = 0.7, aimDir = 1, pwr = 0, pwrDir = 1;
+let nitroLeft = 0, coins = 0, maxX = 0, stillFor = 0, shake = 0, zoom = 1;
+let camX = 0, camY = 0, t = 0, boostFlash = 0;
+const used = new Set(), got = new Set();
+const parts = [];
+
+function newRun() {
+  const s = S();
+  phase = AIM; playing = true;
+  car.x = 60; car.y = ground(60) + 16; car.vx = 0; car.vy = 0; car.ang = 0; car.av = 0; car.on = true;
+  aimA = 0.7; aimDir = 1; pwr = 0; pwrDir = 1;
+  nitroLeft = s.nitroN; coins = 0; maxX = 0; stillFor = 0; shake = 0; zoom = 1; boostFlash = 0;
+  used.clear(); got.clear(); parts.length = 0;
+  camX = car.x; camY = car.y + 60;
+  hide('garage'); hide('result');
+}
+
+/* ==================== DIEU KHIEN ==================== */
+function tap() {
+  if (!playing) return;
+  const s = S();
+  if (phase === AIM) { phase = POWER; return; }
+  if (phase === POWER) {
+    const sp = s.launch * (0.55 + 0.45 * pwr);
+    car.vx = Math.cos(aimA) * sp; car.vy = Math.sin(aimA) * sp;
+    car.av = 0.02 + pwr * 0.03; car.on = false; phase = FLY;
+    blip(150, 0.16, 'sawtooth'); shake = 9;
+    return;
+  }
+  if (phase === FLY && nitroLeft > 0) {
+    nitroLeft--;
+    const sp = Math.hypot(car.vx, car.vy);
+    let dx = 1, dy = 0.25;
+    if (sp > 0.4) { dx = car.vx / sp; dy = car.vy / sp; }
+    car.vx += dx * s.nitroP + 1.2; car.vy += Math.max(0.15, dy) * s.nitroP * 0.75 + 1.0;
+    for (let i = 0; i < 22; i++) parts.push({ x:car.x, y:car.y, vx:-dx*6 - Math.random()*5, vy:-dy*6 + (Math.random()-0.5)*4, l:1, c:'#ff8c42', r:5 + Math.random()*5 });
+    blip(320, 0.2, 'square'); shake = 12;
+  }
+}
+cv.addEventListener('pointerdown', e => { e.preventDefault(); tap(); });
+window.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (playing) tap(); } });
+
+/* ==================== AM THANH (rat nhe) ==================== */
+let AC = null;
+function blip(freq, dur, type) {
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.value = 0.05; g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur);
+  } catch (e) {}
+}
+
+/* ==================== VAT LY ==================== */
+function step() {
+  t++;
+  if (shake > 0) shake *= 0.85;
+  if (boostFlash > 0) boostFlash -= 0.06;
+
+  if (phase === AIM)   { aimA += 0.016 * aimDir; if (aimA > 1.31) aimDir = -1; if (aimA < 0.26) aimDir = 1; }
+  if (phase === POWER) { pwr  += 0.028 * pwrDir; if (pwr > 1) { pwr = 1; pwrDir = -1; } if (pwr < 0) { pwr = 0; pwrDir = 1; } }
+
+  if (phase === FLY) {
+    const s = S();
+    if (!car.on) {
+      car.vy -= TUNE.gravity;
+      car.vx *= (1 - s.drag);
+      car.vy *= (1 - s.drag * 0.4);
+      car.ang += car.av; car.av *= 0.996;
+    }
+    car.x += car.vx; car.y += car.vy;
+    if (car.x < 0) { car.x = 0; car.vx = Math.abs(car.vx) * 0.3; }
+
+    // --- cham dat ---
+    const gy = ground(car.x);
+    car.on = false;
+    if (car.y <= gy) {
+      const sl = slopeAt(car.x), hy = Math.hypot(sl, 1);
+      const nx = -sl / hy, ny = 1 / hy, tx = ny, ty = -nx;
+      car.y = gy;
+      let vn = car.vx * nx + car.vy * ny;
+      let vt = car.vx * tx + car.vy * ty;
+      if (vn < 0) {
+        if (-vn > 1.4) {
+          for (let i = 0; i < Math.min(20, Math.round(-vn * 1.4)); i++)
+            parts.push({ x:car.x, y:car.y, vx:(Math.random()-0.3)*5, vy:Math.random()*5, l:1, c:'#d9c8a6', r:3 + Math.random()*4 });
+          shake = Math.min(14, -vn * 0.9);
+          blip(90 + Math.random() * 40, 0.09, 'triangle');
+          vn = -vn * s.bounce;
+        } else vn = 0;
+      }
+      vt += -TUNE.gravity * sl / hy;
+      vt *= (1 - s.roll);
+      car.vx = nx * vn + tx * vt;
+      car.vy = ny * vn + ty * vt;
+      car.on = true;
+      car.ang = Math.atan(sl);
+      car.av = 0;
+
+      // --- bang tang toc ---
+      const i0 = Math.floor((car.x - 2600) / 1300);
+      for (let i = Math.max(0, i0); i < i0 + 6; i++) {
+        if (used.has(i)) continue;
+        if (Math.abs(car.x - padX(i)) < 75 && Math.hypot(car.vx, car.vy) > 2) {
+          const f = Math.pow(TUNE.padDecay, used.size);
+          used.add(i); car.vx *= (1 + TUNE.padGain * f * s.grip); car.vy += (3.2 * f + 1) * s.grip; boostFlash = f;
+          for (let k = 0; k < 26; k++) parts.push({ x:padX(i), y:ground(padX(i)) + 6, vx:(Math.random()-0.2)*7, vy:Math.random()*9, l:1, c:'#3ddc97', r:4 + Math.random()*5 });
+          blip(520, 0.18, 'square'); shake = 12;
+        }
+      }
+    }
+
+    // --- an xu ---
+    const c0 = Math.floor((car.x - 500) / 205);
+    for (let i = Math.max(0, c0); i < c0 + 8; i++) {
+      if (got.has(i)) continue;
+      const c = coinAt(i);
+      if (Math.abs(c.x - car.x) < 50 && Math.abs(c.y - car.y) < 50) {
+        got.add(i); coins++;
+        for (let k = 0; k < 10; k++) parts.push({ x:c.x, y:c.y, vx:(Math.random()-0.5)*5, vy:Math.random()*5, l:1, c:'#ffd166', r:3 + Math.random()*3 });
+        blip(880 + (coins % 6) * 90, 0.09);
+      }
+    }
+
+    if (car.x > maxX) maxX = car.x;
+    const sp = Math.hypot(car.vx, car.vy);
+    if (car.on && sp < 0.9) stillFor++; else stillFor = 0;
+    if (stillFor > 34 || car.x > 4e6) finish();
+  }
+
+  // --- hat bui / lua ---
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.x += p.vx; p.y += p.vy; p.vy -= 0.16; p.vx *= 0.97; p.l -= 0.024;
+    if (p.l <= 0) parts.splice(i, 1);
+  }
+
+  // --- camera ---
+  const alt = car.y - ground(car.x);
+  const tz = Math.max(0.5, Math.min(1, 640 / (alt + 640)));
+  zoom += (tz - zoom) * 0.05;
+  const wantX = car.x + Math.min(200, car.vx * 9);
+  const wantY = Math.max(car.y + 40, ground(car.x) + 130);
+  camX += (wantX - camX) * 0.12;
+  camY += (wantY - camY) * 0.08;
+}
+
+function finish() {
+  phase = DONE; playing = false;
+  const s = S();
+  const m = Math.floor(maxX * TUNE.metresPerUnit);
+  const dc = Math.round(m * TUNE.cashPerMetre);
+  const cc = coins * s.coinVal;
+  const total = dc + cc;
+  save.cash += total; save.runs++;
+  const isBest = m > save.best; if (isBest) save.best = m;
+  persist();
+  document.getElementById('rDist').textContent = m.toLocaleString('en-US');
+  document.getElementById('rDistCash').textContent = dc.toLocaleString('en-US');
+  document.getElementById('rCoins').textContent = coins + ' × ' + s.coinVal + ' = ' + cc.toLocaleString('en-US');
+  document.getElementById('rTotal').textContent = '+' + total.toLocaleString('en-US');
+  document.getElementById('rBank').textContent = save.cash.toLocaleString('en-US');
+  document.getElementById('rBest').style.display = isBest ? 'block' : 'none';
+  if (isBest) blip(1150, 0.3, 'triangle');
+  setTimeout(() => show('result'), 550);
+}
+
+/* ==================== VE HINH ==================== */
+const sx = x => W / 2 + (x - camX) * zoom;
+const sy = y => H * 0.62 - (y - camY) * zoom;
+
+function draw() {
+  ctx.save();
+  if (shake > 0.4) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+
+  // troi
+  const sk = ctx.createLinearGradient(0, 0, 0, H);
+  sk.addColorStop(0, '#1b2a5c'); sk.addColorStop(0.45, '#3f5fa8'); sk.addColorStop(0.8, '#8fa8d8'); sk.addColorStop(1, '#d9c6a8');
+  ctx.fillStyle = sk; ctx.fillRect(-40, -40, W + 80, H + 80);
+
+  // mat troi + quang sang toa dan
+  const sunX = W * 0.78, sunY = H * 0.15;
+  const halo = ctx.createRadialGradient(sunX, sunY, 18, sunX, sunY, 120);
+  halo.addColorStop(0, 'rgba(255,226,150,.42)'); halo.addColorStop(0.45, 'rgba(255,214,120,.13)');
+  halo.addColorStop(1, 'rgba(255,214,120,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(sunX, sunY, 120, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,232,168,.95)'; ctx.beginPath(); ctx.arc(sunX, sunY, 30, 0, 7); ctx.fill();
+
+  // may
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  for (let i = 0; i < 7; i++) {
+    const cxp = ((i * 640 - camX * 0.12) % (W + 500) + W + 500) % (W + 500) - 250;
+    const cyp = H * 0.1 + (i % 3) * 52 - camY * 0.03;
+    ctx.beginPath(); ctx.ellipse(cxp, cyp, 56, 17, 0, 0, 7);
+    ctx.ellipse(cxp + 38, cyp + 6, 40, 13, 0, 0, 7); ctx.fill();
+  }
+
+  // nui xa (2 lop parallax, neo theo man hinh nen khong bi phong to)
+  for (const L of [{ px:0.18, py:0.18, col:'#8494b8', a:30, o:158 },
+                   { px:0.34, py:0.32, col:'#4a5980', a:42, o:104 },
+                   { px:0.62, py:0.58, col:'#6d8c7d', a:18, o:14  }]) {
+    ctx.fillStyle = L.col; ctx.beginPath(); ctx.moveTo(-20, H + 20);
+    for (let X = -20; X <= W + 20; X += 12) {
+      const wx = camX * L.px + X * 1.5;
+      const hh = L.a * Math.sin(wx / 640) + L.a * 0.5 * Math.sin(wx / 241 + 2);
+      ctx.lineTo(X, H * 0.62 - (hh + L.o - camY * L.py));
+    }
+    ctx.lineTo(W + 20, H + 20); ctx.closePath(); ctx.fill();
+  }
+
+  // mat dat
+  ctx.beginPath(); ctx.moveTo(-20, H + 40);
+  for (let px = -20; px <= W + 20; px += 5) {
+    const wx = camX + (px - W / 2) / zoom;
+    ctx.lineTo(px, sy(ground(wx)));
+  }
+  ctx.lineTo(W + 20, H + 40); ctx.closePath();
+  const gg = ctx.createLinearGradient(0, sy(60), 0, H);
+  gg.addColorStop(0, '#4f8f4a'); gg.addColorStop(0.12, '#3c7340'); gg.addColorStop(1, '#22402b');
+  ctx.fillStyle = gg; ctx.fill();
+  ctx.strokeStyle = '#7dc06a'; ctx.lineWidth = 3 * zoom; ctx.stroke();
+
+  // vach 100m
+  ctx.font = '600 ' + Math.max(9, 11 * zoom) + 'px -apple-system,sans-serif';
+  const step100 = 1000; // 1000 don vi = 100 m
+  const from = Math.floor((camX - W / zoom) / step100) * step100;
+  for (let x = Math.max(0, from); x < camX + W / zoom; x += step100) {
+    if (x === 0) continue;
+    const X = sx(x), Y = sy(ground(x));
+    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X, Y - 34 * zoom); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(x * TUNE.metresPerUnit) + 'm', X, Y - 40 * zoom);
+  }
+
+  // bang tang toc
+  const p0 = Math.floor((camX - 2200) / 1300);
+  for (let i = Math.max(0, p0); i < p0 + 8; i++) {
+    const px = padX(i); if (px < camX - W / zoom || px > camX + W / zoom) continue;
+    const X = sx(px), Y = sy(ground(px));
+    ctx.save(); ctx.translate(X, Y); ctx.rotate(Math.atan(slopeAt(px)) * -1); ctx.scale(zoom, zoom);
+    ctx.fillStyle = used.has(i) ? 'rgba(120,140,130,.55)' : '#1d7d55';
+    ctx.fillRect(-70, -13, 140, 13);
+    ctx.fillStyle = used.has(i) ? 'rgba(200,220,210,.5)' : '#6bffb0';
+    for (let k = 0; k < 3; k++) {
+      const ox = -44 + k * 44, ph = used.has(i) ? 0 : (t * 0.09 + k) % 1;
+      ctx.globalAlpha = used.has(i) ? 0.6 : 0.55 + 0.45 * Math.sin(ph * 6.28);
+      ctx.beginPath(); ctx.moveTo(ox - 12, -3); ctx.lineTo(ox, -11); ctx.lineTo(ox + 12, -3); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
+  // xu
+  const cc0 = Math.floor((camX - W / zoom - 400) / 205);
+  for (let i = Math.max(0, cc0); i < cc0 + Math.ceil(2 * W / zoom / 205) + 8; i++) {
+    if (got.has(i)) continue;
+    const c = coinAt(i); const X = sx(c.x), Y = sy(c.y + Math.sin(t * 0.05 + i) * 5);
+    if (X < -40 || X > W + 40) continue;
+    const wob = Math.abs(Math.cos(t * 0.06 + i));
+    ctx.fillStyle = '#ffd166'; ctx.beginPath(); ctx.ellipse(X, Y, 11 * zoom * (0.35 + 0.65 * wob), 11 * zoom, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(X - 2 * zoom, Y - 2 * zoom, 4 * zoom * wob, 4.5 * zoom, 0, 0, 7); ctx.fill();
+  }
+
+  // hat
+  for (const p of parts) {
+    ctx.globalAlpha = Math.max(0, p.l); ctx.fillStyle = p.c;
+    ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y), p.r * zoom * p.l, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  drawCar();
+  if (phase === AIM || phase === POWER) drawAim();
+
+  ctx.restore();
+  if (boostFlash > 0) { ctx.fillStyle = 'rgba(61,220,151,' + (boostFlash * 0.22) + ')'; ctx.fillRect(0, 0, W, H); }
+  if (playing) drawHUD();
+}
+
+function drawCar() {
+  const X = sx(car.x), Y = sy(car.y), z = zoom;
+  ctx.save(); ctx.translate(X, Y); ctx.rotate(-car.ang); ctx.scale(z * 1.22, z * 1.22);
+
+  // lua nitro khi bay nhanh
+  const sp = Math.hypot(car.vx, car.vy);
+  if (phase === FLY && sp > 12) {
+    const fl = Math.min(30, (sp - 12) * 1.4) * (0.7 + 0.3 * Math.random());
+    const g = ctx.createLinearGradient(-22, 0, -22 - fl, 0);
+    g.addColorStop(0, 'rgba(255,180,60,.95)'); g.addColorStop(1, 'rgba(255,60,40,0)');
+    ctx.fillStyle = g; ctx.beginPath();
+    ctx.moveTo(-20, -6); ctx.lineTo(-20 - fl, 0); ctx.lineTo(-20, 6); ctx.closePath(); ctx.fill();
+  }
+
+  ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  // than xe
+  ctx.fillStyle = '#e8443d'; rr(-22, -11, 44, 15, 4); ctx.fill();
+  // mui/kinh
+  ctx.fillStyle = '#c9352f'; ctx.beginPath();
+  ctx.moveTo(-9, -11); ctx.lineTo(-5, -21); ctx.lineTo(9, -21); ctx.lineTo(13, -11); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#8fd3ff'; ctx.beginPath();
+  ctx.moveTo(-6, -12.5); ctx.lineTo(-3.2, -19.2); ctx.lineTo(7.5, -19.2); ctx.lineTo(10.5, -12.5); ctx.closePath(); ctx.fill();
+  // den
+  ctx.fillStyle = '#ffe9a3'; rr(18, -8, 5, 4, 1.5); ctx.fill();
+  // banh
+  const wr = 7.5, spin = car.x * 0.11;
+  for (const wx of [-12, 13]) {
+    ctx.fillStyle = '#1b1b21'; ctx.beginPath(); ctx.arc(wx, 3, wr, 0, 7); ctx.fill();
+    ctx.fillStyle = '#c9ccd6'; ctx.beginPath(); ctx.arc(wx, 3, wr * 0.45, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#7e8494'; ctx.lineWidth = 1.4;
+    for (let k = 0; k < 3; k++) {
+      const a = spin + k * 2.09;
+      ctx.beginPath(); ctx.moveTo(wx, 3); ctx.lineTo(wx + Math.cos(a) * wr * 0.8, 3 + Math.sin(a) * wr * 0.8); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+function drawAim() {
+  const X = sx(car.x), Y = sy(car.y);
+  // mui chi huong
+  const L = 60 + 90 * (phase === POWER ? pwr : 0.5);
+  ctx.save(); ctx.translate(X, Y - 14); ctx.rotate(-aimA);
+  ctx.strokeStyle = phase === POWER ? '#ffd166' : 'rgba(255,255,255,.85)';
+  ctx.lineWidth = 4; ctx.setLineDash([8, 7]); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(L, 0); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(L, 0); ctx.lineTo(L - 13, -8); ctx.lineTo(L - 13, 8); ctx.closePath();
+  ctx.fillStyle = phase === POWER ? '#ffd166' : '#fff'; ctx.fill();
+  ctx.restore();
+
+  // thanh luc
+  if (phase === POWER) {
+    const bw = Math.min(260, W - 60), bx = (W - bw) / 2, by = H - 92;
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; rr(bx, by, bw, 20, 10); ctx.fill();
+    const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+    g.addColorStop(0, '#3ddc97'); g.addColorStop(0.65, '#ffd166'); g.addColorStop(1, '#ff4d4d');
+    ctx.fillStyle = g; rr(bx + 3, by + 3, (bw - 6) * pwr, 14, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '800 12px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('CHAM DE PHONG', W / 2, by - 12);
+  } else {
+    ctx.fillStyle = '#fff'; ctx.font = '800 13px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('CHAM DE CHON GOC', W / 2, H - 74);
+  }
+}
+
+function drawHUD() {
+  const top = 8 + safeTop;
+  const m = Math.floor(Math.max(maxX, car.x) * TUNE.metresPerUnit);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; rr(12, top + 20, 130, 54, 12); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '900 26px -apple-system,sans-serif';
+  ctx.fillText(m.toLocaleString('en-US') + ' m', 22, top + 54);
+  ctx.fillStyle = '#9fb0d8'; ctx.font = '600 9.5px -apple-system,sans-serif';
+  ctx.fillText('KY LUC ' + save.best.toLocaleString('en-US') + ' M', 22, top + 68);
+
+  // xu trong luot
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; rr(W - 108, top + 20, 96, 30, 12); ctx.fill();
+  ctx.fillStyle = '#ffd166'; ctx.font = '800 15px -apple-system,sans-serif';
+  ctx.fillText('\u{1FA99} ' + coins, W - 22, top + 41);
+
+  // nitro
+  const s = S();
+  const nw = Math.max(96, 44 + s.nitroN * 17), nx = W - 12 - nw;
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; rr(nx, top + 56, nw, 26, 11); ctx.fill();
+  ctx.fillStyle = '#9fb0d8'; ctx.font = '700 8.5px -apple-system,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('NITRO', nx + 11, top + 72);
+  for (let i = 0; i < s.nitroN; i++) {
+    const bx = W - 24 - i * 17;
+    ctx.beginPath(); ctx.arc(bx, top + 69, 6, 0, 7);
+    ctx.fillStyle = i < nitroLeft ? '#ff8c42' : 'rgba(255,255,255,.16)'; ctx.fill();
+  }
+  ctx.textAlign = 'left';
+  if (phase === FLY && nitroLeft > 0) {
+    const pw2 = 170, px2 = (W - pw2) / 2, py2 = H - 58;
+    ctx.fillStyle = 'rgba(0,0,0,.38)'; rr(px2, py2, pw2, 26, 13); ctx.fill();
+    ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + 0.4 * Math.sin(t * 0.12)) + ')';
+    ctx.font = '800 12px -apple-system,sans-serif';
+    ctx.fillText('CHAM DE DOT NITRO', W / 2, py2 + 17);
+    ctx.textAlign = 'left';
+  }
+}
+
+/* ==================== MAN HINH / UI ==================== */
+const show = id => document.getElementById(id).classList.add('on');
+const hide = id => document.getElementById(id).classList.remove('on');
+
+function renderGarage() {
+  document.getElementById('gCash').textContent = save.cash.toLocaleString('en-US');
+  document.getElementById('gBest').textContent = save.best.toLocaleString('en-US') + ' m';
+  const list = document.getElementById('gList');
+  list.innerHTML = '';
+  for (const u of UPGRADES) {
+    const lv = save.lv[u.key], maxed = lv >= u.max, cost = costOf(u, lv);
+    const el = document.createElement('div'); el.className = 'up';
+    let pips = '';
+    for (let i = 0; i < u.max; i++) pips += '<i class="pip' + (i < lv ? ' f' : '') + '"></i>';
+    el.innerHTML =
+      '<div class="ico">' + u.ico + '</div>' +
+      '<div class="mid"><div class="nm">' + u.nm + ' <span style="color:#8a96c0;font-weight:600">Lv ' + lv + '</span></div>' +
+      '<div class="ds">' + u.ds + '</div><div class="pips">' + pips + '</div></div>';
+    const b = document.createElement('button');
+    b.className = 'buy' + (maxed ? ' max' : '');
+    b.textContent = maxed ? 'MAX' : cost.toLocaleString('en-US');
+    b.disabled = maxed || save.cash < cost;
+    b.onclick = () => {
+      if (save.cash < cost || maxed) return;
+      save.cash -= cost; save.lv[u.key]++; persist(); renderGarage(); blip(660, 0.12, 'triangle');
+    };
+    el.appendChild(b); list.appendChild(el);
+  }
+}
+let resetArm = 0;
+document.getElementById('btnReset').onclick = (e) => {
+  const b = e.target;
+  if (!resetArm) { resetArm = 1; b.textContent = 'Cham lan nua de xoa that'; b.style.color = '#ff6b6b';
+    setTimeout(() => { resetArm = 0; b.textContent = 'Xoa tien do'; b.style.color = ''; }, 3000); return; }
+  resetArm = 0; b.textContent = 'Xoa tien do'; b.style.color = '';
+  save = { cash:0, best:0, runs:0, lv:{} }; UPGRADES.forEach(u => save.lv[u.key] = 0);
+  persist(); renderGarage();
+};
+document.getElementById('btnLaunch').onclick = () => { newRun(); blip(440, 0.1); };
+document.getElementById('btnAgain').onclick  = () => { newRun(); };
+document.getElementById('btnGarage').onclick = () => { hide('result'); renderGarage(); show('garage'); };
+
+/* ==================== VONG LAP ==================== */
+let acc = 0, last = 0;
+function loop(ts) {
+  if (!last) last = ts;
+  let dt = Math.min(60, ts - last); last = ts; acc += dt;
+  while (acc >= 16.666) { step(); acc -= 16.666; }
+  draw();
+  requestAnimationFrame(loop);
+}
+resize(); readSafe(); renderGarage();
+camX = 60; camY = ground(60) + 100; car.x = 60; car.y = ground(60) + 16;
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
