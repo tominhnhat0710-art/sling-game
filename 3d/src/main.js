@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import RAPIER from 'rapier';
 import { TUNE as T } from './TUNE.js';
 import { heightAt, buildTerrain, padX } from './terrain.js';
-import { buildCar, syncCar, wheelPos } from './car.js';
+import { buildCar, syncCar, destroyCar, wheelPos } from './car.js';
 import { ChaseCam } from './camera.js';
 import { Fx } from './fx.js';
 import { Audio } from './audio.js';
 import { UPGRADES, giaCap } from './upgrades.js';
 import * as SAVE from './save.js';
+import { CARS } from './cars.js';
 
 const $ = id => document.getElementById(id);
 const AIM = 0, FLY = 2, DONE = 3;
@@ -65,7 +66,14 @@ world.timestep = 1 / 60;
 const terrain = buildTerrain(scene, RAPIER, world);
 
 const START_X = 10;
-const car = buildCar(scene, RAPIER, world, START_X, heightAt(START_X, 0) + T.slingHeight);
+let car = buildCar(scene, RAPIER, world, SAVE.xeDangDung(), START_X, heightAt(START_X, 0) + T.slingHeight);
+
+/* Doi sang dong xe khac: xoa han xe cu khoi the gioi vat ly roi dung xe moi.
+   Phai xoa that, khong thi xe cu van nam do va van va cham. */
+function doiXe() {
+  destroyCar(scene, world, car);
+  car = buildCar(scene, RAPIER, world, SAVE.xeDangDung(), START_X, heightAt(START_X, 0) + T.slingHeight);
+}
 const chase = new ChaseCam(cam);
 const fx = new Fx(scene);
 const audio = new Audio();
@@ -132,6 +140,7 @@ let aimA = deg(42), power = 0;
 let dragging = false, dragSx = 0, dragSy = 0, dragX = 0, dragY = 0;
 let nitroLeft = T.nitroCount, maxX = START_X, stillFor = 0, elapsed = 0, doneAt = 0;
 let menuOpen = true, levelSuspend = 0, firstLandUp = null, nitroCd = 0;
+let tienX = START_X, tienT = 0;      // moc do 'con tien duoc khong'
 let pv = { x: 0, y: 0, z: 0 }, impactSkip = 0, rollTick = 0;
 const m4 = new THREE.Matrix4(), q1 = new THREE.Quaternion(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
 const UPV = new THREE.Vector3(0, 1, 0);
@@ -139,7 +148,7 @@ const UPV = new THREE.Vector3(0, 1, 0);
 function resetRun() {
   phase = AIM; aimA = deg(42); power = 0; dragging = false;
   CS = SAVE.chiSo();
-  firstLandUp = null; nitroCd = 0;
+  firstLandUp = null; nitroCd = 0; tienX = START_X; tienT = 0;
   nitroLeft = CS.soNitro; maxX = START_X; stillFor = 0; elapsed = 0; levelSuspend = 0;
   car.body.setLinearDamping(CS.canGio);
   car.col.setRestitution(CS.doNay);
@@ -316,7 +325,7 @@ function stepPhysics(dt) {
      Sau moi va cham thi tam ngung levelRecover giay, nen dam vao dia hinh
      van bi lon nhao that, chi la sau do xe tu chinh lai duoc. */
   if (levelSuspend > 0) levelSuspend -= dt;
-  if (T.autoLevel > 0 && !grounded && levelSuspend <= 0) tuCanBang(dt, v);
+  if (T.autoLevel > 0 && !grounded && levelSuspend <= 0) tuCanBang(dt, v, alt);
 
   /* Nang cap Khi dong hoc: xe luon, tuc la bu lai mot phan trong luc khi dang bay. */
   if (!grounded && CS.luon > 0) {
@@ -330,8 +339,7 @@ function stepPhysics(dt) {
     // bui bay ra khi lan nhanh
     const sp2 = Math.hypot(v.x, v.z);
     if (sp2 > T.rollDustSpeed && (rollTick++ % 3 === 0)) {
-      const wp = wheelPos();
-      const w = wp[2 + (rollTick % 2)];
+      const w = car.wp[2 + (rollTick % 2)];
       fx.burst(p.x + w[0], heightAt(p.x, p.z) + 0.25, p.z + w[2], 2,
                { color: 0xb3a473, spread: 2.5, up: 2.4, life: 0.55, size: 0.85 });
     }
@@ -356,19 +364,33 @@ function stepPhysics(dt) {
     }
   }
 
+  // Con tien duoc thi con choi. Moi lan tien them stallMet met thi lam moi moc.
+  if (maxX - tienX >= T.stallMet) { tienX = maxX; tienT = elapsed; }
+  const bettac = (elapsed - tienT) > T.stallGiay;
+
   const sp = Math.hypot(v.x, v.y, v.z);
   if (grounded && sp < T.stopSpeed) stillFor++; else stillFor = 0;
-  if (stillFor > T.stopFrames || elapsed > T.maxSeconds) finish();
+  if (stillFor > T.stopFrames || bettac || elapsed > T.maxSeconds) finish();
 }
 
 const qTarget = new THREE.Quaternion(), qCur = new THREE.Quaternion(), qErr = new THREE.Quaternion();
 const eTarget = new THREE.Euler();
-function tuCanBang(dt, v) {
+function tuCanBang(dt, v, alt) {
   // Huong muc tieu: mui xe chia theo huong bay, nhung gioi han do chuc mui,
   // de xe khong bao gio nam ngua hay chui dau xuong.
   const maxP = deg(T.levelMaxPitch);
   let pitch = 0;
   if (v.x > 1) pitch = Math.max(-maxP, Math.min(maxP, Math.atan2(v.y, v.x)));
+
+  /* KEO MUI LEN TRUOC KHI HA CANH.
+     Sap cham dat thi keo dan ve nam ngang han, va tang luc chinh len.
+     Roi cang nhanh thi phai bat dau keo tu cao hon. Khong co cai nay thi ban
+     goc cao se cham dat bang mui xe roi lon nhao ngay lan dau. */
+  const nguong = T.levelFlareAlt + Math.max(0, -v.y) * T.levelFlareSpd;
+  const flare = Math.max(0, Math.min(1, 1 - alt / nguong));
+  pitch *= (1 - flare);
+  const boost = 1 + flare * T.levelFlareGain;
+
   eTarget.set(0, 0, pitch);
   qTarget.setFromEuler(eTarget);
 
@@ -381,11 +403,11 @@ function tuCanBang(dt, v) {
   let wx = 0, wy = 0, wz = 0;
   if (sn > 1e-4) {
     const ang = 2 * Math.acos(Math.min(1, qErr.w));
-    const k = T.levelGain * T.autoLevel * ang / sn;
+    const k = T.levelGain * T.autoLevel * CS.canBang * boost * ang / sn;
     wx = qErr.x * k; wy = qErr.y * k; wz = qErr.z * k;
   }
   const av = car.body.angvel();
-  const b = Math.min(1, T.levelDamp * dt);
+  const b = Math.min(1, T.levelDamp * boost * dt);
   car.body.setAngvel({
     x: av.x + (wx - av.x) * b,
     y: av.y + (wy - av.y) * b,
@@ -599,11 +621,45 @@ function loop(ts) {
 }
 
 /* =================== GA RA =================== */
+function veXe() {
+  const box = $('gXe');
+  box.innerHTML = '';
+  for (const c of CARS) {
+    const daMua = SAVE.daMua(c.id);
+    const duDk = SAVE.duDieuKien(c);
+    const dangDung = SAVE.save.xe === c.id;
+    const el = document.createElement('div');
+    el.className = 'carc' + (dangDung ? ' sel' : '') + (daMua ? '' : ' lock');
+    let trangThai;
+    if (dangDung) trangThai = '<span class="tag ok">ĐANG DÙNG</span>';
+    else if (daMua) trangThai = '<span class="tag">Chạm để chọn</span>';
+    else if (!duDk) trangThai = '<span class="tag no">Cần kỷ lục ' + c.moKhi + ' m</span>';
+    else if (SAVE.save.tien < c.gia) trangThai = '<span class="tag no">Cần ' + c.gia.toLocaleString('vi-VN') + '</span>';
+    else trangThai = '<span class="tag buy">Mua ' + c.gia.toLocaleString('vi-VN') + '</span>';
+    el.innerHTML =
+      '<div class="cdot" style="background:#' + c.mau.toString(16).padStart(6, '0') + '"></div>' +
+      '<div class="cname">' + c.ten + '</div>' +
+      '<div class="cdesc">' + c.mota + '</div>' +
+      '<div class="cpro">+ ' + c.manh + '</div>' +
+      '<div class="ccon">- ' + c.yeu + '</div>' + trangThai;
+    el.addEventListener('pointerdown', ev => ev.stopPropagation());
+    el.addEventListener('click', ev => {
+      ev.stopPropagation();
+      audio.init();
+      if (daMua) { if (SAVE.chonXe(c.id)) { doiXe(); resetRun(); audio.pad(); veGaRa(); } return; }
+      if (SAVE.muaXe(c)) { doiXe(); resetRun(); audio.best(); veGaRa(); }
+    });
+    box.appendChild(el);
+  }
+}
+
 function veGaRa() {
   CS = SAVE.chiSo();
   $('gTien').textContent = SAVE.save.tien.toLocaleString('vi-VN');
   $('gKyLuc').textContent = SAVE.save.kyLuc.toLocaleString('vi-VN') + ' m';
-  const list = $('gList');
+  $('gXeTen').textContent = SAVE.xeDangDung().ten;
+  veXe();
+  const list = $('gUp');
   list.innerHTML = '';
   for (const u of UPGRADES) {
     const lv = SAVE.save.lv[u.key];
@@ -700,7 +756,10 @@ window.__game = {
   get carPos() { const p = car.body.translation(); return { x: p.x, y: p.y, z: p.z }; },
   get groundUnderCar() { const p = car.body.translation(); return heightAt(p.x, p.z); },
   get landingX() { return predictLanding(); },
-  resetRun, fireNitro, moGaRa, dongGaRa, veGaRa,
+  resetRun, fireNitro, moGaRa, dongGaRa, veGaRa, doiXe, CARS,
+  get xe() { return SAVE.save.xe; }, get xeDaMua() { return SAVE.save.xeDaMua.slice(); },
+  chonXe(id) { if (SAVE.chonXe(id)) { doiXe(); resetRun(); return true; } return false; },
+  choXe(id) { const c = CARS.find(x => x.id === id); SAVE.save.xeDaMua.push(id); SAVE.save.xe = id; doiXe(); resetRun(); return true; },
   setLv(k, v) { SAVE.save.lv[k] = v; CS = SAVE.chiSo(); },
   setAutoLevel(v) { T.autoLevel = v; },
   get heSoTien() { return CS.heSoTien; }, UPGRADES, giaCap,

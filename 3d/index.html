@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BAY XA 3D v3.0 - Giai doan 3: tien, ga ra, nang cap - build 2026-08-19 -->
+<!-- BAY XA 3D v4.0 - Giai doan 4: nhieu dong xe - build 2026-08-19 -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -100,6 +100,27 @@
     background:linear-gradient(135deg,#3ddc97,#22b579);color:#03231a;font-family:inherit}
   .buy:disabled{background:rgba(255,255,255,.08);color:#5d688f}
   .buy.max{background:rgba(99,210,255,.14);color:#63d2ff}
+  .sechd{flex:0 0 auto;font-size:10px;letter-spacing:1.6px;color:#8a96c0;text-transform:uppercase;
+    margin:4px 2px 2px;font-weight:700}
+  .sechd b{color:#ffd166}
+  .carrow{display:flex;gap:8px;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
+    padding:2px 0 8px;scroll-snap-type:x mandatory;flex:0 0 auto;align-items:stretch}
+  .carc{flex:0 0 178px;scroll-snap-align:start;background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:10px 11px;
+    display:flex;flex-direction:column}
+  .carc.sel{border-color:#ffd166;background:rgba(255,209,102,.09)}
+  .carc.lock{opacity:.72}
+  .cdot{width:26px;height:9px;border-radius:5px;margin-bottom:7px}
+  .cname{font-size:13.5px;font-weight:800}
+  .cdesc{font-size:10px;color:#8a96c0;margin-top:2px;line-height:1.35}
+  .cpro{font-size:9.5px;color:#3ddc97;margin-top:6px;line-height:1.3}
+  .ccon{font-size:9.5px;color:#ff9a8a;margin:2px 0 8px;line-height:1.3}
+  .tag{display:inline-block;margin-top:auto;padding-top:4px;align-self:flex-start;font-size:9.5px;font-weight:800;letter-spacing:.6px;
+    padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.09);color:#c3cbe8}
+  .tag.ok{background:rgba(255,209,102,.18);color:#ffd166}
+  .tag.buy{background:linear-gradient(135deg,#3ddc97,#22b579);color:#03231a}
+  .tag.no{background:rgba(255,255,255,.06);color:#6b7699}
+
   .ghelp{text-align:center;font-size:10.5px;color:#69739c;margin-top:10px;line-height:1.5}
   .reset{display:block;margin:8px auto 0;background:none;border:0;color:#4d5680;
     font-size:10.5px;letter-spacing:.5px;font-family:inherit;text-decoration:underline}
@@ -151,7 +172,12 @@
     <div class="stat"><span>Tiền</span><b id="gTien" style="color:#ffd166">0</b></div>
     <div class="stat"><span>Kỷ lục</span><b id="gKyLuc" style="color:#63d2ff">0 m</b></div>
   </div>
-  <div class="list" id="gList"></div>
+  <div class="list" id="gList">
+    <div class="sechd">Chọn xe &middot; đang dùng: <b id="gXeTen">Xe cỏ</b></div>
+    <div id="gXe" class="carrow"></div>
+    <div class="sechd">Nâng cấp (áp dụng cho mọi xe)</div>
+    <div id="gUp"></div>
+  </div>
   <button class="go" id="btnPhong">PHÓNG!</button>
   <div class="ghelp">Kéo xuống và về sau rồi thả để bắn &middot; đang bay thì chạm để đốt nitro</div>
   <button class="reset" id="btnXoa">Xoá tiến độ</button>

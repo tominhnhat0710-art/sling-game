@@ -19,8 +19,9 @@ export const TUNE = {
 
   /* --- phong xe kieu sling: keo va tha --- */
   launchSpeed:    52,     // toc do phong khi keo cang toi da (m/s)
-  aimMin:         10,     // goc thap nhat (do)
-  aimMax:         78,     // goc cao nhat
+  aimMin:         3,      // goc thap nhat (do). Gan nhu ban la sat dat.
+  aimMax:         88,     // goc cao nhat. Gan nhu ban thang dung len troi.
+                          // De rong het co, sling thi phai chinh duoc tu sat dat toi thang dung.
   pullMax:        190,    // keo bao nhieu diem tren man hinh la cang toi da.
                           // Nho lai = nhay hon nhung kho chinh; to len = phai keo dai hon.
   pullMin:        16,     // keo ngan hon nay thi khong tinh, tranh cham nham la ban mat
@@ -53,12 +54,18 @@ export const TUNE = {
   /* --- tu can bang khi bay (de xe dap dat bang banh) --- */
   autoLevel:      1.0,    // 0 = tat han, xe lon nhao tu do nhu truoc.
                           // 1 = luon tu chinh lai de dap dat bang banh xe.
-  levelMaxPitch:  38,     // mui xe duoc chuc theo huong bay toi da bao nhieu do.
+  levelMaxPitch:  32,     // mui xe duoc chuc theo huong bay toi da bao nhieu do.
                           // De thap thi xe gan nhu luon nam ngang.
   levelGain:      4.2,    // luc chinh manh bao nhieu
   levelDamp:      7.0,    // toc do bat kip huong muc tieu
   levelRecover:   0.55,   // sau khi va cham thi mat bao nhieu giay moi chinh lai duoc.
                           // Nho co do tre nay, dam vao dia hinh van bi lon nhao that su.
+
+  /* Sap ha canh thi keo xe ve nam ngang han, giong may bay keo mui len truoc khi
+     tiep dat. Khong co cai nay thi ban goc cao se cham dat bang mui xe roi lon nhao. */
+  levelFlareAlt:  22,     // duoi do cao nay thi bat dau keo ve nam ngang (met)
+  levelFlareSpd:  0.85,   // roi cang nhanh thi phai keo som hon bao nhieu
+  levelFlareGain: 3.2,    // gan dat thi luc chinh manh len bao nhieu lan
 
   /* --- nitro --- */
   nitroCount:     2,
@@ -81,16 +88,23 @@ export const TUNE = {
                           // nen ban vong cung cao moi la cach choi dung.
 
   /* --- ma sat khi lan tren dat --- */
-  groundDrag:     0.007,  // moi khung mat bao nhieu % toc do khi sat dat.
+  groundDrag:     0.0058, // moi khung mat bao nhieu % toc do khi sat dat.
                           // Day la thu ngan khong cho xe lan mai khong dung.
+                          // Ha tu 0.007 xuong de xe tron hon, lan them mot doan truoc khi dung.
+                          // Ha xuong 0.0042 thi tron qua, luot chay tan 60 giay moi dung.
   groundAlt:      3.2,    // duoi do cao nay coi nhu dang sat dat.
                           // Phai de rong rai, vi xe rat hay nam ngua tua vao cot moc hoac
                           // tang da, luc do tam xe cach mat dat kha xa ma van la da dung.
 
   /* --- ket thuc luot --- */
-  stopSpeed:      2.2,    // duoi toc do nay coi nhu da dung
-  stopFrames:     40,
-  maxSeconds:     60,
+  /* Ket thuc luot khi xe khong tien them duoc nua, thay vi cat bang dong ho.
+     Cat bang dong ho lam nguoi choi bi ngat giua luc con dang bay, rat vo ly. */
+  stallMet:       2,      // trong khoang thoi gian duoi day ma tien duoi bao nhieu met
+  stallGiay:      3.0,    // thi coi nhu het luot
+  stopSpeed:      1.6,    // duoi toc do nay coi nhu da dung. Ha xuong tu 2.2 de xe duoc
+                          // bo lan them den luc that su gan nhu dung han.
+  stopFrames:     48,
+  maxSeconds:     120,   // chi la chot chan cuoi cung, binh thuong khong bao gio cham toi
 
   /* --- camera --- */
   camAim:         [-18.0, 9.0, 13.0], // LUC NGAM: nhin tu ben canh, xe huong sang phai man hinh.
