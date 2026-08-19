@@ -76,7 +76,7 @@ export function buildCar(scene, RAPIER, world, def, startX, startY) {
   const col = world.createCollider(
     RAPIER.ColliderDesc.cuboid(h.dai, h.cao, h.rong)
       .setMass(T.mass * ct.khoiLuong)
-      .setRestitution(T.bounceBase).setFriction(0.7),
+      .setRestitution(T.chassisRest).setFriction(0.7),
     body
   );
 

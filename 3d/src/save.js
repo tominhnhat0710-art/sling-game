@@ -1,13 +1,15 @@
 import { UPGRADES, BUOC } from './upgrades.js';
 import { TUNE as T } from './TUNE.js';
 import { CARS, xeTheoId } from './cars.js';
+import { MAPS, mapTheoId } from './maps.js';
 
 const KEY = 'bayxa3d.save.v1';
 
 function moi() {
   const lv = {};
   for (const u of UPGRADES) lv[u.key] = 0;
-  return { tien: 0, kyLuc: 0, soLuot: 0, lv, xe: CARS[0].id, xeDaMua: [CARS[0].id] };
+  return { tien: 0, kyLuc: 0, soLuot: 0, lv, xe: CARS[0].id, xeDaMua: [CARS[0].id],
+           map: MAPS[0].id, mapDaQua: [], kyLucMap: {} };
 }
 
 export let save = moi();
@@ -22,6 +24,9 @@ export function load() {
       save.lv = Object.assign(moi().lv, d.lv || {});
       if (!Array.isArray(save.xeDaMua) || !save.xeDaMua.length) save.xeDaMua = [CARS[0].id];
       if (!save.xeDaMua.includes(save.xe)) save.xe = CARS[0].id;
+      if (!Array.isArray(save.mapDaQua)) save.mapDaQua = [];
+      if (typeof save.kyLucMap !== 'object' || !save.kyLucMap) save.kyLucMap = {};
+      if (!MAPS.some(m => m.id === save.map)) save.map = MAPS[0].id;
     }
   } catch (e) { /* bo qua */ }
   return save;
@@ -40,6 +45,23 @@ export function xoaHet() {
 /* Chi so xe sau khi nang cap. Moi cho trong game phai lay so tu day, khong lay
    truc tiep tu TUNE, de nang cap co tac dung that. */
 export const xeDangDung = () => xeTheoId(save.xe);
+export const mapDangChoi = () => mapTheoId(save.map);
+
+export function mapMoChua(m) { return save.kyLuc >= m.moKhi; }
+export function chonMap(id) {
+  const m = MAPS.find(x => x.id === id);
+  if (!m || !mapMoChua(m)) return false;
+  save.map = id; ghi(); return true;
+}
+export function ghiKyLucMap(id, m) {
+  const cu = save.kyLucMap[id] || 0;
+  if (m > cu) { save.kyLucMap[id] = m; ghi(); return true; }
+  return false;
+}
+export function danhDauQuaDich(id) {
+  if (!save.mapDaQua.includes(id)) { save.mapDaQua.push(id); ghi(); return true; }
+  return false;
+}
 
 /* Da mua xe chua, va da du dieu kien mo chua */
 export function daMua(id) { return save.xeDaMua.includes(id); }
@@ -59,9 +81,8 @@ export function chiSo() {
     heSoBang:   (1 + BUOC.wheelGrip * lv.wheel) * ct.heSoBang,
     maSatLan:   T.groundDrag * Math.max(0.35, 1 - BUOC.wheelRoll * lv.wheel) * ct.maSatLan,
     bamDuong:   T.frictionSlip * (1 + 0.06 * lv.wheel),
-    // Tran 0.75 truoc day chan mat ban sac cua Xe dia hinh: len cap cao thi moi xe
-    // deu bi ep ve cung mot do nay. Nang tran len de he so rieng cua xe con y nghia.
-    doNay:      Math.min(0.88, (T.bounceBase + BUOC.wheelBounce * lv.wheel) * ct.doNay),
+    // Do nay CO DIEU KHIEN qua banh xe, khong phai do nay cua thung xe.
+    doNay:      Math.min(T.nayMax, (T.nayBase + BUOC.wheelBounce * lv.wheel) * ct.doNay),
     canGio:     Math.max(0.003, (T.linDamp - BUOC.aero * lv.aero) * ct.canGio),
     luon:       BUOC.aeroGlide * lv.aero + ct.luon,
     soNitro:    T.nitroCount + lv.ntank,

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BAY XA 3D v4.0 - Giai doan 4: nhieu dong xe - build 2026-08-19 -->
+<!-- BAY XA 3D v5.0 - Giai doan 5: nhieu map, chuong ngai, vat pham, dich den - build 2026-08-19 -->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -130,6 +130,26 @@
     .go{padding:13px;font-size:16px}
   }
 
+  #dichBanner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);
+    font-size:38px;font-weight:900;letter-spacing:3px;opacity:0;pointer-events:none;
+    background:linear-gradient(95deg,#ffd166,#ff7a3d);-webkit-background-clip:text;background-clip:text;
+    color:transparent;filter:drop-shadow(0 4px 18px rgba(0,0,0,.5));transition:none}
+  #dichBanner.on{animation:pop 2.2s ease-out}
+  @keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}
+    18%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
+    30%{transform:translate(-50%,-50%) scale(1)}
+    80%{opacity:1}100%{opacity:0}}
+
+  .mapc{flex:0 0 190px;scroll-snap-align:start;background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:0 0 10px;overflow:hidden;
+    display:flex;flex-direction:column}
+  .mapc.sel{border-color:#ffd166;background:rgba(255,209,102,.09)}
+  .mapc.lock{opacity:.7}
+  .mapc .cname,.mapc .cdesc,.mapc .cpro,.mapc .tag{margin-left:11px;margin-right:11px}
+  .mapc .cname{margin-top:8px}
+  .msky{height:44px;width:100%}
+  .cup{font-size:9px;color:#3ddc97;font-weight:700}
+
   #loading{position:fixed;inset:0;display:grid;place-items:center;background:#0d1326;z-index:40;
     font-size:12px;letter-spacing:3px;color:#7f8bb5}
 </style>
@@ -158,6 +178,15 @@
       <div id="nitro"><i class="pip"></i><i class="pip"></i></div>
     </div>
   </div>
+  <div id="dichBox" class="chip" style="display:none;position:absolute;left:50%;transform:translateX(-50%);
+       top:calc(env(safe-area-inset-top) + 14px);padding:6px 12px">
+    <div class="lbl" style="margin:0;text-align:center">Đích</div>
+    <div id="dichSo" style="font-size:14px;font-weight:900;color:#ffd45e">0 m nữa</div>
+  </div>
+  <div id="sanBox" style="display:none;position:absolute;left:50%;transform:translateX(-50%);
+       top:calc(env(safe-area-inset-top) + 74px);font-size:11px;font-weight:900;letter-spacing:2px;
+       text-shadow:0 2px 8px rgba(0,0,0,.5)"><span id="sanTen">MẶT BĂNG</span></div>
+  <div id="dichBanner">VỀ ĐÍCH!</div>
   <div id="bottom">
     <div id="hint">KÉO XUỐNG VÀ VỀ SAU, RỒI THẢ</div>
     <div id="bar"><div id="barFill"></div></div>
@@ -173,6 +202,8 @@
     <div class="stat"><span>Kỷ lục</span><b id="gKyLuc" style="color:#63d2ff">0 m</b></div>
   </div>
   <div class="list" id="gList">
+    <div class="sechd">Chọn map &middot; đang chơi: <b id="gMapTen">Đồng cỏ</b></div>
+    <div id="gMap" class="carrow"></div>
     <div class="sechd">Chọn xe &middot; đang dùng: <b id="gXeTen">Xe cỏ</b></div>
     <div id="gXe" class="carrow"></div>
     <div class="sechd">Nâng cấp (áp dụng cho mọi xe)</div>

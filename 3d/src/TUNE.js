@@ -5,11 +5,12 @@
 export const TUNE = {
   /* --- the gioi --- */
   gravity:        -22,    // luc hut. Nho lai (-14) = bay lau hon, kieu mat trang
-  worldLength:    3200,   // do dai dia hinh (met)
+  worldLength:    4000,   // do dai dia hinh (met). Phai dai hon tam xa xa nhat co the
+                          // dat duoc, neu khong xe se bay ra khoi ria ban do.
   worldBack:      150,    // keo dai dia hinh ve phia sau vach xuat phat bao nhieu met.
                           // Can co, neu khong thi luc ngam se thay ria dia hinh cat ngang man hinh.
   worldWidth:     150,    // be rong dia hinh
-  segX:           480,    // so o luoi doc theo huong bay. Cao hon = dia hinh min hon, may nang hon
+  segX:           560,    // so o luoi doc theo huong bay. Cao hon = dia hinh min hon, may nang hon
   segZ:           14,
 
   /* --- dia hinh --- */
@@ -45,7 +46,18 @@ export const TUNE = {
   susCompress:    1.6,
   susRelax:       2.6,
   frictionSlip:   2.4,    // do bam. Cao = it truot
-  bounceBase:     0.20,   // do nay cua than xe khi chua nang cap banh
+  /* --- NAY --- Chia lam hai thu khac nhau:
+     chassisRest la do nay cua CAI THUNG xe. Phai de RAT THAP. Truoc day de 0.2 roi
+     cong nang cap len tan 0.88, va do la nguyen nhan xe vang tung toe: thung xe dap
+     goc xuong dat thi nay lech, sinh momen xoay, xe lon nhao khong kiem soat duoc.
+     nayBanh la do nay CO DIEU KHIEN qua banh xe: khi banh cham dat, game tu dao
+     chieu van toc doc theo truc dung. Vi tac dung dung tam xe nen khong sinh momen
+     xoay, xe nay cao ma van giu duoc the dung banh. */
+  chassisRest:    0.06,   // do nay cua thung xe. De thap, dung tang.
+  nayBase:        0.34,   // nay co dieu khien khi chua nang cap
+  nayMax:         0.86,   // tran cua nay co dieu khien
+  nayMinFall:     3.5,    // roi nhanh hon nay (m/s) thi moi tinh la mot cu nay
+  bounceBase:     0.20,   // (khong con dung, giu lai cho tuong thich)
   linDamp:        0.05,   // can gio. Cao = mat toc do nhanh.
                           // Phai du lon, neu khong thi nang cap Khi dong hoc khong co tac dung
                           // gi do luon (da do thuc te: 0.02 thi cap 0 va cap 9 bay xa y het nhau).
@@ -66,6 +78,13 @@ export const TUNE = {
   levelFlareAlt:  22,     // duoi do cao nay thi bat dau keo ve nam ngang (met)
   levelFlareSpd:  0.85,   // roi cang nhanh thi phai keo som hon bao nhieu
   levelFlareGain: 3.2,    // gan dat thi luc chinh manh len bao nhieu lan
+
+  /* Sau va cham thi KHONG tat han viec giu thang bang nua, chi lam yeu di.
+     Tat han la nguyen nhan xe lat roi khong bao gio tu dung len duoc. */
+  levelWeak:      0.42,   // trong luc vua va cham thi luc giu con bao nhieu phan
+  spinCap:        7.5,    // gioi han toc do quay (rad/s). 51 rad/s la xe quay nhu chong chong.
+  spinDamp:       0.5,    // cham dat thi nhan toc do quay voi so nay, cho no thoi quay
+  tuDungLen:      0.45,   // xe nghieng qua muc nay thi luon tu chinh, ke ca dang sat dat
 
   /* --- nitro --- */
   nitroCount:     2,
@@ -140,6 +159,11 @@ export const TUNE = {
   rollDustSpeed:  14,     // lan tren dat nhanh hon nay thi bat bui
   volume:         0.55,   // am luong chung, 0 la tat het
   tienMoiMet:     1.0,    // 1 met bay duoc thi bao nhieu tien
+  tienVatPham:    120,    // an mot dong tien tren duong duoc bao nhieu
+  tienVeDich:     300,    // thuong khi qua duoc vach dich
+  tienVeDichLanDau: 1500, // thuong them cho lan dau qua dich cua moi map
+  bongLift:       26,     // bong bay day xe len bao nhieu m/s
+  banKinhAn:      7.0,    // ban kinh an vat pham (met). Nho qua thi bay ca luot khong an duoc gi.
   windMax:        70,     // toc do ung voi tieng gio to nhat
 
   fogNear:        180,
