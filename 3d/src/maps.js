@@ -22,11 +22,16 @@ export const MAPS = [
     doc: { so: 7, cao: [5, 10], dai: [26, 44] },
     dai: 1900, vuc: { so: 2, sau: [7, 12] }, nuiXa: { cao: 46, mau: 0x6f9c66, xa: 2 },
     dia:  { bien: 6.5, buoc: 82, nham: 0.22, longRong: 60, caoVach: 30 },
-    cay:  { kieu: 'tron', matDo: 1.0, la: [0x5fcf62, 0x46b352], than: 0x9c7550 },
-    da:   { mau: 0xb9c2cc, matDo: 0.7 },
+    cay:  { kieu: 'tron', matDo: 1.0, la: [0x5fcf62, 0x46b352], than: 0x9c7550,
+            model: ['cay_tan', 'cay_thong'], cao: [7, 11] },
+    da:   { mau: 0xb9c2cc, matDo: 0.7,
+            model: ['da_cum', 'da_to', 'da_nho', 'da_vun'], cao: [1.6, 4.2] },
     hoa:  { matDo: 1.2, mau: [0xffe36e, 0xff8fc7, 0xfff6ff] },
     san:  { bang: 0, cat: 0.25, nhun: 0.2 },
-    chuongNgai: 1.1, vatPham: 1.0
+    chuongNgai: 1.1, vatPham: 1.0,
+    thu: [{ model: 'thu_bo', so: 7, cao: 1.9, banKinh: 32, nhanh: 8 },
+          { model: 'thu_ngua', so: 5, cao: 2.2, banKinh: 38, nhanh: 12 }],
+    canhTri: [{ model: 'canh_ho', so: 5, cao: 1.1 }, { model: 'canh_ghe', so: 6, cao: 1.0 }]
   },
   {
     id: 'samac', ten: 'Sa mạc', moKhi: 620, dich: 1520,
@@ -41,10 +46,13 @@ export const MAPS = [
     dai: 2900, vuc: { so: 3, sau: [10, 18] }, nuiXa: { cao: 62, mau: 0xd0a05e, xa: 2 },
     dia:  { bien: 8.5, buoc: 120, nham: 0.12, longRong: 72, caoVach: 22 },
     cay:  { kieu: 'xuongrong', matDo: 0.45, la: [0x63bd6a, 0x4e9c56], than: 0x8a7a52 },
-    da:   { mau: 0xd8b98a, matDo: 1.1 },
+    da:   { mau: 0xd8b98a, matDo: 1.1,
+            model: ['da_cam', 'da_to', 'da_nho', 'da_vun'], cao: [1.8, 5.0] },
     hoa:  { matDo: 0.35, mau: [0xffb86e, 0xff8f6e, 0xfff0c0] },
     san:  { bang: 0, cat: 1.4, nhun: 0.15 },
-    chuongNgai: 1.5, vatPham: 1.1
+    chuongNgai: 1.5, vatPham: 1.1,
+    thu: [{ model: 'thu_ngua', so: 6, cao: 2.2, banKinh: 40, nhanh: 13 }],
+    canhTri: [{ model: 'canh_ghe', so: 4, cao: 1.0 }]
   },
   {
     id: 'tuyet', ten: 'Núi tuyết', moKhi: 1150, dich: 660,
@@ -58,11 +66,15 @@ export const MAPS = [
     doc: { so: 9, cao: [6, 13], dai: [22, 38] },
     dai: 1500, vuc: { so: 4, sau: [12, 22] }, nuiXa: { cao: 96, mau: 0xb9d4e8, xa: 3 },
     dia:  { bien: 11, buoc: 68, nham: 0.4, longRong: 56, caoVach: 44 },
-    cay:  { kieu: 'thong', matDo: 0.9, la: [0x6fd0a8, 0x4fae86], than: 0x8b6f56 },
-    da:   { mau: 0xdfeaf5, matDo: 0.9 },
+    cay:  { kieu: 'thong', matDo: 0.9, la: [0x6fd0a8, 0x4fae86], than: 0x8b6f56,
+            model: ['cay_thong'], cao: [8, 13] },
+    da:   { mau: 0xdfeaf5, matDo: 0.9,
+            model: ['da_to', 'da_cum', 'da_nho'], cao: [1.6, 4.6] },
     hoa:  { matDo: 0.3, mau: [0xbff0ff, 0xffffff, 0xd9c7ff] },
     san:  { bang: 1.6, cat: 0.1, nhun: 0.2 },
-    chuongNgai: 1.9, vatPham: 1.2
+    chuongNgai: 1.9, vatPham: 1.2,
+    thu: [{ model: 'thu_shiba', so: 8, cao: 0.85, banKinh: 26, nhanh: 11 }],
+    canhTri: [{ model: 'canh_thac', so: 3, cao: 26 }]
   },
   {
     id: 'mattrang', ten: 'Mặt trăng', moKhi: 1600, dich: 1420,
@@ -77,7 +89,8 @@ export const MAPS = [
     dai: 2700, vuc: { so: 5, sau: [16, 30] }, nuiXa: { cao: 84, mau: 0x8b83b4, xa: 3 },
     dia:  { bien: 14, buoc: 110, nham: 0.55, longRong: 58, caoVach: 52 },
     cay:  { kieu: 'tinhthe', matDo: 0.55, la: [0x9ff0ff, 0xc79fff], than: 0x6f6a94 },
-    da:   { mau: 0xb8b2d4, matDo: 1.4 },
+    da:   { mau: 0xb8b2d4, matDo: 1.4,
+            model: ['da_cum', 'da_to', 'da_nho', 'da_vun'], cao: [2.0, 6.0] },
     hoa:  { matDo: 0.5, mau: [0x9ff0ff, 0xffa8e8, 0xfff6a8] },
     san:  { bang: 0.4, cat: 0.3, nhun: 0.5 },
     chuongNgai: 2.3, vatPham: 1.3
@@ -94,11 +107,16 @@ export const MAPS = [
     doc: { so: 8, cao: [5, 11], dai: [24, 40] },
     dai: 3300, vuc: { so: 4, sau: [12, 24] }, nuiXa: { cao: 74, mau: 0xe8b8dc, xa: 3 },
     dia:  { bien: 9, buoc: 95, nham: 0.3, longRong: 54, caoVach: 38 },
-    cay:  { kieu: 'bongbong', matDo: 0.8, la: [0xffb3e6, 0xb3e0ff], than: 0xe8c9ef },
-    da:   { mau: 0xf0dcff, matDo: 0.6 },
+    cay:  { kieu: 'bongbong', matDo: 0.8, la: [0xffb3e6, 0xb3e0ff], than: 0xe8c9ef,
+            model: ['cay_tan'], cao: [7, 10] },
+    da:   { mau: 0xf0dcff, matDo: 0.6,
+            model: ['da_nho', 'da_vun', 'da_cum'], cao: [1.5, 3.6] },
     hoa:  { matDo: 1.4, mau: [0xfff0a8, 0xffb3e6, 0xb3f0ff] },
     san:  { bang: 0.5, cat: 0.05, nhun: 1.8 },
-    chuongNgai: 1.7, vatPham: 1.4
+    chuongNgai: 1.7, vatPham: 1.4,
+    thu: [{ model: 'thu_shiba', so: 6, cao: 0.9, banKinh: 26, nhanh: 12 },
+          { model: 'thu_bo', so: 4, cao: 1.9, banKinh: 30, nhanh: 8 }],
+    canhTri: [{ model: 'canh_ho', so: 6, cao: 1.2 }, { model: 'canh_thac', so: 2, cao: 22 }]
   }
 ];
 

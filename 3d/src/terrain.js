@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { TUNE as T } from './TUNE.js';
+import * as GLB from './glb.js';
 import { MATSAN, VATPHAM } from './maps.js';
 import { texDat, texThung, texLop, texPad, texDich } from './tex.js';
 
@@ -390,6 +391,36 @@ function nhapGeo(geos) {
 }
 
 /* ================== DUNG CA THE GIOI CHO MOT MAP ================== */
+
+/* Lay { geo, mat } tu mot model .glb da tai, chuan hoa ve chieu cao caoMuon.
+   Tra null neu chua co model, luc do phan ve bang code cu se chay thay. */
+const _cacheProp = new Map();
+function propGLB(khoa, caoMuon, opt = {}) {
+  if (!khoa || !GLB.co(khoa)) return null;
+  const ck = khoa + '|' + caoMuon.toFixed(2) + '|' + (opt.mau || 0) + '|' + (opt.ao || '') + '|' + (opt.motMesh || '');
+  if (_cacheProp.has(ck)) return _cacheProp.get(ck);
+  let ra = null;
+  try {
+    let root = GLB.lay(khoa).scene.clone(true);
+    /* Mot so file la mot CUM vat the (82 bui co, 3 cay thong). Neu chi can
+       mot cai thi tach ra, khong thi moi instance phai tra gia ca cum. */
+    if (opt.motMesh != null) root = GLB.motMesh(root, opt.motMesh) || root;
+    GLB.chuanHoa(root, caoMuon);
+    ra = GLB.gopDeInstance(root, opt);
+    if (ra) ra.tris = GLB.soTamGiac(ra.geo);
+  } catch (e) { console.warn('[prop]', khoa, e && e.message); }
+  _cacheProp.set(ck, ra);
+  return ra;
+}
+
+/* Chan tam giac: model that nang hon hinh ve bang code rat nhieu, nen so ban
+   phai tu co lai cho vua ngan sach. Khong co cai nay thi dong co nhay tu
+   337.000 len 5.400.000 tam giac, iPhone chay khong noi. */
+function soBan(mongMuon, triMoiBan, nganSach) {
+  if (!triMoiBan) return mongMuon;
+  return Math.max(6, Math.min(mongMuon, Math.floor(nganSach / triMoiBan)));
+}
+
 export function buildWorld(scene, RAPIER, world, map) {
   setMap(map);
   const rac = [];                       // moi thu can xoa khi doi map
@@ -641,14 +672,25 @@ export function buildWorld(scene, RAPIER, world, map) {
   const UP = new THREE.Vector3(0, 1, 0);
   {
     const mau = map.cay.la;
-    for (let variant = 0; variant < 3; variant++) {
+    const mdCay = map.cay.model || null;
+    const soBien = mdCay ? mdCay.length : 3;
+    for (let variant = 0; variant < soBien; variant++) {
       const mauV = new THREE.Color(mau[variant % mau.length]).offsetHSL(0, 0, (variant - 1) * 0.05);
-      const proto = dungCay(map.cay.kieu, mauV.getHex(), map.cay.than, variant + 1);
-      const merged = nhapGeo(boAO(gopGroup(proto)));
-      const N = Math.round(150 * map.cay.matDo);
-      const im = them(new THREE.InstancedMesh(merged, new THREE.MeshStandardMaterial({
-        vertexColors: true, roughness: 0.9, flatShading: true, envMapIntensity: 0.25
-      }), Math.max(1, N)));
+      /* Uu tien model .glb that. Khong co thi ve bang code nhu truoc. */
+      const cc = map.cay.cao || [7, 11];
+      const caoV = cc[0] + (cc[1] - cc[0]) * (soBien === 1 ? 0.5 : variant / (soBien - 1));
+      const g1 = mdCay ? propGLB(mdCay[variant], caoV, { ao: 0.34 }) : null;
+      let merged, matCay;
+      if (g1) { merged = g1.geo; matCay = g1.mat; }
+      else {
+        const proto = dungCay(map.cay.kieu, mauV.getHex(), map.cay.than, variant + 1);
+        merged = nhapGeo(boAO(gopGroup(proto)));
+        matCay = new THREE.MeshStandardMaterial({
+          vertexColors: true, roughness: 0.9, flatShading: true, envMapIntensity: 0.25 });
+      }
+      let N = Math.round((g1 ? 150 : 150) * map.cay.matDo / (soBien / 3));
+      if (g1) N = soBan(N, g1.tris, Math.round(T.nganSachCay / soBien));
+      const im = them(new THREE.InstancedMesh(merged, matCay, Math.max(1, N)));
       let c = 0;
       for (let i = variant; i < 3200 && c < N; i += 3) {
         const x = rnd(i * 1.7) * DAI;
@@ -662,22 +704,39 @@ export function buildWorld(scene, RAPIER, world, map) {
       im.count = c; im.castShadow = true;
     }
   }
-  for (let bien = 0; bien < 3; bien++) {
-    const N = Math.round(80 * map.da.matDo);
-    const mauD = new THREE.Color(map.da.mau).offsetHSL(0, 0, (bien - 1) * 0.045);
-    const im = them(new THREE.InstancedMesh(dungDa(bien + 1, 1.4),
-      new THREE.MeshStandardMaterial({ color: mauD, roughness: 0.95, flatShading: true, envMapIntensity: 0.3 }), Math.max(1, N)));
-    let c = 0;
-    for (let i = bien; i < 1800 && c < N; i += 3) {
-      const x = rnd(i * 2.9 + 400) * DAI;
-      const side = rnd(i + 700) > 0.5 ? 1 : -1;
-      const z = side * (16 + rnd(i + 1300) * (T.worldWidth / 2 - 20));
-      const s = 0.5 + rnd(i + 33) * 1.1;
-      q.setFromAxisAngle(UP, rnd(i + 8) * 6.28); sc.set(s, s * (0.6 + rnd(i + 44) * 0.5), s);
-      m4.compose(tv.set(x, heightAt(x, z) + s * 0.28, z), q, sc);
-      im.setMatrixAt(c++, m4);
+  {
+    const mdDa = map.da.model || null;
+    const soD = mdDa ? mdDa.length : 3;
+    const cd = map.da.cao || [1.6, 4.2];
+    for (let bien = 0; bien < soD; bien++) {
+      let N = Math.round(80 * map.da.matDo * 3 / soD);
+      const mauD = new THREE.Color(map.da.mau).offsetHSL(0, 0, (bien - 1) * 0.045);
+      const caoD = cd[0] + (cd[1] - cd[0]) * (soD === 1 ? 0.5 : bien / (soD - 1));
+      /* Da tu model that. Nhuom ve mau da cua map, neu khong thi da xam
+         nam tren tuyet hay tren sa mac trong rat lac. */
+      const g1 = mdDa ? propGLB(mdDa[bien], caoD, { ao: 0.3, mau: map.da.mau }) : null;
+      let geoD, matD;
+      if (g1) { geoD = g1.geo; matD = g1.mat; }
+      else {
+        geoD = dungDa(bien + 1, 1.4);
+        matD = new THREE.MeshStandardMaterial({ color: mauD, roughness: 0.95,
+          flatShading: true, envMapIntensity: 0.3 });
+      }
+      if (g1) N = soBan(N, g1.tris, Math.round(T.nganSachDa / soD));
+      const im = them(new THREE.InstancedMesh(geoD, matD, Math.max(1, N)));
+      let c = 0;
+      for (let i = bien; i < 1800 && c < N; i += 3) {
+        const x = rnd(i * 2.9 + 400) * DAI;
+        const side = rnd(i + 700) > 0.5 ? 1 : -1;
+        const z = side * (16 + rnd(i + 1300) * (T.worldWidth / 2 - 20));
+        const s = 0.5 + rnd(i + 33) * 1.1;
+        q.setFromAxisAngle(UP, rnd(i + 8) * 6.28);
+        sc.set(s, s * (0.6 + rnd(i + 44) * 0.5), s);
+        m4.compose(tv.set(x, heightAt(x, z) - (g1 ? s * 0.2 : -s * 0.28), z), q, sc);
+        im.setMatrixAt(c++, m4);
+      }
+      im.count = c; im.castShadow = true;
     }
-    im.count = c; im.castShadow = true;
   }
   {
     const N = Math.round(130 * map.hoa.matDo);
@@ -813,13 +872,37 @@ export function buildWorld(scene, RAPIER, world, map) {
     rao.count = c; rao.castShadow = true;
   }
 
+  /* ---- CANH TRI: ho nuoc, ghe da, thac. Vai cai lam diem nhan cho map. ---- */
+  if (map.canhTri) {
+    for (let j = 0; j < map.canhTri.length; j++) {
+      const ct = map.canhTri[j];
+      const g1 = propGLB(ct.model, ct.cao, { ao: 0.24 });
+      if (!g1) continue;
+      const im = them(new THREE.InstancedMesh(g1.geo, g1.mat, Math.max(1, ct.so)));
+      let c = 0;
+      for (let i = 0; i < ct.so * 6 && c < ct.so; i++) {
+        const x = 130 + rnd(i * 7.1 + j * 130 + 3) * Math.max(200, DAI - 260);
+        const ben = rnd(i + j * 17 + 55) > 0.5 ? 1 : -1;
+        const z = ben * (22 + rnd(i + j * 29 + 91) * 44);
+        const s = 0.85 + rnd(i + 13) * 0.5;
+        q.setFromAxisAngle(UP, rnd(i + 4) * 6.28); sc.set(s, s, s);
+        m4.compose(tv.set(x, heightAt(x, z) - 0.15, z), q, sc);
+        im.setMatrixAt(c++, m4);
+      }
+      im.count = c; im.castShadow = true; im.receiveShadow = true;
+    }
+  }
+
   /* ---- BUI CO: hang nghin bui nho phu mat dat. Day la thu duy nhat lam mat dat
      trong co suc song thay vi mot mang mau. Ba bien the, mau nhat dan theo do cao. ---- */
   const viTriVat = [];   // ghi lai de dat dom bong tiep dat
   for (let bien = 0; bien < 3; bien++) {
-    const proto = dungCoTuft(bien + 1);
-    const merged = nhapGeo(boAO(gopGroup(proto)));
-    const N = Math.round(700 * (map.hoa.matDo || 1));
+    const gco = propGLB(bien % 2 ? 'co_pha' : 'co_xanh', 0.7 + bien * 0.22,
+                        { ao: 0.22, motMesh: bien * 7 });
+    const proto = gco ? null : dungCoTuft(bien + 1);
+    const merged = gco ? gco.geo : nhapGeo(boAO(gopGroup(proto)));
+    let N = Math.round(700 * (map.hoa.matDo || 1));
+    if (gco) N = soBan(N, gco.tris, Math.round(T.nganSachCo / 3));
     const mauCo = new THREE.Color(map.dat.tren).offsetHSL(0.03, 0.18, 0.06 + bien * 0.05);
     const im = them(new THREE.InstancedMesh(merged, new THREE.MeshStandardMaterial({
       color: mauCo, roughness: 0.92, flatShading: true, envMapIntensity: 0.18,

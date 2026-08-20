@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import RAPIER from 'rapier';
 import { TUNE as T } from './TUNE.js';
 import { datAniso } from './tex.js';
+import * as GLB from './glb.js';
+import { dungThu, capNhatThu, xoaThu } from './thu.js';
 import { heightAt, buildWorld, destroyWorld, padX, matSanTai, setMap, layDoc } from './terrain.js';
 import { buildCar, syncCar, destroyCar, wheelPos } from './car.js';
 import { ChaseCam } from './camera.js';
@@ -95,10 +97,21 @@ scene.add(sun); scene.add(sun.target); scene.add(hemi);
 
 /* --- the gioi vat ly --- */
 let MAP = SAVE.mapDangChoi();
+/* Phai tai het model .glb TRUOC khi dung the gioi, neu khong buildWorld se
+   khong thay model nao va lang le quay ve ve cay bang code. */
+await GLB.taiHet(t => {
+  const b = document.getElementById('taiBar');
+  if (b) b.style.width = Math.round(4 + t * 96) + '%';
+});
+{ const m = document.getElementById('dangTai');
+  if (m) { m.style.transition = 'opacity .35s'; m.style.opacity = '0';
+           setTimeout(() => m.remove(), 400); } }
+
 setMap(MAP);
 const world = new RAPIER.World({ x: 0, y: MAP.trongLuc, z: 0 });
 world.timestep = 1 / 60;
 let terrain = buildWorld(scene, RAPIER, world, MAP);
+let damThu = dungThu(scene, MAP, heightAt, MAP.dai || 900, x => { const v = Math.sin(x * 12.9898) * 43758.5453; return v - Math.floor(v); });
 
 const START_X = 10;
 let car = buildCar(scene, RAPIER, world, SAVE.xeDangDung(), START_X, heightAt(START_X, 0) + T.slingHeight);
@@ -108,7 +121,9 @@ function doiMap() {
   MAP = SAVE.mapDangChoi();
   destroyWorld(scene, world, terrain);
   setMap(MAP);
+  xoaThu(scene, damThu);
   terrain = buildWorld(scene, RAPIER, world, MAP);
+  damThu = dungThu(scene, MAP, heightAt, MAP.dai || 900, x => { const v = Math.sin(x * 12.9898) * 43758.5453; return v - Math.floor(v); });
   apMauMap(MAP);
   doiXe();
   resetRun();
@@ -825,6 +840,7 @@ function loop(ts) {
 
   if (phase === AIM) drawAimHelpers();
   fx.update(dt);
+  { const pc = car.body.translation(); capNhatThu(damThu, dt, pc.x, pc.z, heightAt); }
 
   chase.update(p, v, phase === FLY || phase === DONE, dt);
   sky.position.copy(cam.position);

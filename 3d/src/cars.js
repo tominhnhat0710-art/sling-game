@@ -12,8 +12,8 @@
    ========================================================================= */
 export const CARS = [
   {
-    id: 'golf', ten: 'Xe golf', mota: 'Xe sân golf. Chậm, nhẹ, nhưng là chỗ bắt đầu.',
-    gia: 0, moKhi: 0, model: null,
+    id: 'golf', model: 'xe_cu', ten: 'Xe cũ', mota: 'Xe nhỏ cũ. Chậm, nhẹ, nhưng là chỗ bắt đầu.',
+    gia: 0, moKhi: 0,
     mau: 0xf2f4f8, mauPhu: 0x2a2f38,
     hinh: { dai: 1.15, cao: 0.4, rong: 0.72, kieu: 'golf', banh: 0.34, benhBanh: 0.26 },
     ct: { khoiLuong: 0.62, tocDo: 0.74, doNay: 0.62, maSatLan: 1.75, canGio: 1.5,
@@ -22,8 +22,8 @@ export const CARS = [
     yeu: 'Phóng yếu nhất, cản gió cao nhất'
   },
   {
-    id: 'co', ten: 'Xe cỏ', mota: 'Hatchback phổ thông. Cân bằng, mốc để so sánh.',
-    gia: 1200, moKhi: 120, model: null,
+    id: 'co', model: 'xe_taxi', ten: 'Taxi', mota: 'Taxi thành phố. Cân bằng, mốc để so sánh.',
+    gia: 1200, moKhi: 120,
     mau: 0xd8382f, mauPhu: 0x2a2f38,
     hinh: { dai: 1.55, cao: 0.48, rong: 0.82, kieu: 'hatch', banh: 0.45, benhBanh: 0.32 },
     ct: { khoiLuong: 1.0, tocDo: 1.0, doNay: 1.0, maSatLan: 1.0, canGio: 1.0,
@@ -32,8 +32,8 @@ export const CARS = [
     yeu: 'Không có điểm mạnh riêng'
   },
   {
-    id: 'bantai', ten: 'Bán tải', mota: 'Nặng và trơn. Bay không cao nhưng lăn rất xa và giữ tốc độ tốt.',
-    gia: 5000, moKhi: 350, model: null,
+    id: 'bantai', model: 'xe_suv', ten: 'SUV', mota: 'Nặng và trơn. Bay không cao nhưng lăn rất xa và giữ tốc độ tốt.',
+    gia: 5000, moKhi: 350,
     mau: 0x2f7fd8, mauPhu: 0x22303f,
     hinh: { dai: 1.95, cao: 0.5, rong: 0.86, kieu: 'pickup', banh: 0.48, benhBanh: 0.36 },
     ct: { khoiLuong: 1.45, tocDo: 0.98, doNay: 0.85, maSatLan: 0.52, canGio: 0.84,
@@ -42,8 +42,8 @@ export const CARS = [
     yeu: 'Phóng chậm hơn, nảy thấp'
   },
   {
-    id: 'diahinh', ten: 'Xe địa hình', mota: 'Bánh to, giảm xóc dài. Đi xa nhờ rất nhiều cú nảy.',
-    gia: 6500, moKhi: 500, model: null,
+    id: 'diahinh', model: 'xe_tuantra', ten: 'Xe tuần tra', mota: 'Xe cảnh sát. Bánh to, giảm xóc dài, đi xa nhờ nhiều cú nảy.',
+    gia: 6500, moKhi: 500,
     mau: 0x3ddc97, mauPhu: 0x25302b,
     hinh: { dai: 1.7, cao: 0.55, rong: 0.9, kieu: 'pickup', banh: 0.68, benhBanh: 0.48 },
     ct: { khoiLuong: 1.15, tocDo: 1.08, doNay: 1.7, maSatLan: 0.7, canGio: 1.0,
@@ -52,8 +52,8 @@ export const CARS = [
     yeu: 'Phóng không mạnh, cản gió hơi cao'
   },
   {
-    id: 'dua', ten: 'Xe đua', mota: 'Nhẹ và cực nhanh, nhưng khó bảo và mất tốc độ khi chạm đất.',
-    gia: 22000, moKhi: 1200, model: null,
+    id: 'dua', model: 'xe_ae86', ten: 'AE86', mota: 'Toyota AE86. Nhẹ và cực nhanh, nhưng khó bảo.',
+    gia: 22000, moKhi: 1200,
     mau: 0xffc233, mauPhu: 0x1c1c22,
     hinh: { dai: 1.85, cao: 0.34, rong: 0.9, kieu: 'gt', banh: 0.40, benhBanh: 0.42 },
     ct: { khoiLuong: 0.72, tocDo: 1.16, doNay: 0.78, maSatLan: 1.9, canGio: 0.62,
@@ -62,8 +62,8 @@ export const CARS = [
     yeu: 'Gầm thấp nên ăn bảng tăng tốc kém, lăn trên đất mất tốc độ rất nhanh'
   },
   {
-    id: 'sieu', ten: 'Siêu xe', mota: 'Nét dao, cực thấp, cánh gió to. Nhanh nhất, khó bảo nhất.',
-    gia: 55000, moKhi: 1150, model: null,
+    id: 'sieu', model: 'xe_rx7', ten: 'RX-7', mota: 'Mazda RX-7. Cực thấp, nhanh nhất, khó bảo nhất.',
+    gia: 55000, moKhi: 1150,
     mau: 0xe8332e, mauPhu: 0x14161c,
     hinh: { dai: 2.0, cao: 0.3, rong: 0.96, kieu: 'sieu', banh: 0.42, benhBanh: 0.46 },
     ct: { khoiLuong: 0.68, tocDo: 1.24, doNay: 0.66, maSatLan: 2.3, canGio: 0.52,

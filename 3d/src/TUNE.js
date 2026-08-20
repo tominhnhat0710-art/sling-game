@@ -185,6 +185,13 @@ export const TUNE = {
 
   fogNear:        180,
   fogFar:         920,
+  /* ---- NGAN SACH TAM GIAC CHO PROP MODEL THAT ----
+     Model tai tu mang nang hon hinh ve bang code, nen so ban phai tu co lai.
+     Ha ba so nay xuong neu iPhone nong hoac tut khung hinh. */
+  nganSachCay:  190000,
+  nganSachDa:    90000,
+  nganSachCo:   130000,
+
   shadowSpan:     34,     // vung co bong do quanh xe
   sunOffset:      [-14, 96, 16],  // huong nang. Gan nhu tren dinh dau, de bong do nam ngay
                                   // duoi xe chu khong lech ra mot chuc, tranh nhin thay 2 bong

@@ -158,6 +158,22 @@
 </style>
 </head>
 <body>
+  <!-- Man cho tai: gio game phai tai 2,3 MB model that nen phai co man nay,
+       khong thi tren 4G nguoi choi chi thay man hinh trang vai giay. -->
+  <div id="dangTai" style="position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;
+       align-items:center;justify-content:center;gap:14px;
+       background:linear-gradient(180deg,#0f1730,#1b2547);color:#eaf0ff;
+       font:700 15px/1.4 -apple-system,system-ui,sans-serif;letter-spacing:.12em">
+    <div style="font-size:30px;letter-spacing:.2em;
+         background:linear-gradient(90deg,#ffd45e,#ff8a3d);-webkit-background-clip:text;
+         -webkit-text-fill-color:transparent">BAY XA</div>
+    <div style="opacity:.7">ĐANG TẢI MÔ HÌNH…</div>
+    <div style="width:190px;height:6px;border-radius:4px;background:#ffffff22;overflow:hidden">
+      <i id="taiBar" style="display:block;height:100%;width:4%;border-radius:4px;
+         background:linear-gradient(90deg,#ffd45e,#ff8a3d);transition:width .2s"></i>
+    </div>
+  </div>
+
 
 <div id="loading">ĐANG TẢI...</div>
 

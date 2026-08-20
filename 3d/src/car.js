@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { TUNE as T } from './TUNE.js';
 import { THAN } from './bodies.js';
 import { sonXe, kinhXe, kimLoai, nhuaDen } from './gfx.js';
+import * as GLB from './glb.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /* Vi tri 4 banh trong he toa do than xe. Xe huong theo truc +X. */
 export function wheelPos(h) {
@@ -91,6 +93,71 @@ function dungThanXe(def, mt) {
   return g;
 }
 
+/* =========================================================================
+   THAN XE TU MODEL .glb THAT
+   Model tai ve co du kieu ty le va du kieu huong: cai dai theo truc Z, cai
+   theo X, cai chi cao 0,3 don vi. Nen buoc dau tien bat buoc la DO ROI CHUAN
+   HOA, khong duoc tin con so nao trong file.
+
+   Banh xe: model nao co node ten chua "wheel" thi t thao ra, lay mot cai lam
+   mau roi lap cho ca 4 vi tri. Model nao khong tach banh (Camaro) thi dung
+   banh ve bang code nhu cu.
+   ========================================================================= */
+function layThanGLB(def, h) {
+  if (!def.model || !GLB.co(def.model)) return null;
+  const root = GLB.lay(def.model).scene.clone(true);
+
+  const wrap = new THREE.Group();
+  wrap.add(root);
+  wrap.updateMatrixWorld(true);
+
+  /* --- xoay cho truc dai nam theo +X (huong bay cua game) --- */
+  let bb = new THREE.Box3().setFromObject(root);
+  let sz = bb.getSize(new THREE.Vector3());
+  if (sz.z > sz.x) {
+    root.rotation.y += Math.PI / 2;
+    root.updateMatrixWorld(true);
+    bb = new THREE.Box3().setFromObject(root);
+    sz = bb.getSize(new THREE.Vector3());
+  }
+
+  /* --- ty le: chieu dai than xe bang 2 * h.dai --- */
+  const tyle = (h.dai * 2) / Math.max(1e-6, sz.x);
+  root.scale.multiplyScalar(tyle);
+  root.updateMatrixWorld(true);
+
+  /* --- dat lai goc: giua theo X/Z, day xe nam duoi tam khoi luong --- */
+  bb = new THREE.Box3().setFromObject(root);
+  const tam = bb.getCenter(new THREE.Vector3());
+  root.position.x -= tam.x;
+  root.position.z -= tam.z;
+  root.position.y -= bb.min.y + h.cao * 1.15;
+  root.updateMatrixWorld(true);
+
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of ms) if (m) m.envMapIntensity = 1.0;
+  });
+
+  /* --- BANH XE ---
+     T KHONG thao banh ra roi ve lai bang code nua: lam vay thi ban kinh va
+     vi tri khong bao gio khop, va da thu roi, no ra mot cai banh to tuong lech
+     han khoi xe. Gio banh cua model o dau thi de nguyen do, chi QUAY TAI CHO
+     quanh truc cua chinh no. Mat phan nhun giam xoc, nhung duoc hinh dung. */
+  const banh = [];
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    if (!/wheel|banh|tire|tyre/i.test(o.name || '')) return;
+    o.geometry.computeBoundingBox();
+    const s2 = o.geometry.boundingBox.getSize(new THREE.Vector3());
+    const truc = s2.x < s2.y ? (s2.x < s2.z ? 'x' : 'z') : (s2.y < s2.z ? 'y' : 'z');
+    banh.push({ node: o, truc, goc0: o.rotation[truc] });
+  });
+  return { group: wrap, banhGLB: banh };
+}
+
 export function buildCar(scene, RAPIER, world, def, startX, startY) {
   const h = def.hinh;
   const ct = def.ct;
@@ -131,7 +198,8 @@ export function buildCar(scene, RAPIER, world, def, startX, startY) {
     crom: kimLoai(0xd8dde6, 0.22),
     lamp: new THREE.MeshStandardMaterial({ color: 0xfff3cf, emissive: 0xffd98a, emissiveIntensity: 1.4, roughness: 0.25 })
   };
-  const g = dungThanXe(def, mt);
+  const glb = layThanGLB(def, h);
+  const g = glb ? glb.group : dungThanXe(def, mt);
 
   const wheelGeo = new THREE.CylinderGeometry(h.banh, h.banh, h.benhBanh, 18);
   wheelGeo.rotateX(Math.PI / 2);
@@ -140,6 +208,7 @@ export function buildCar(scene, RAPIER, world, def, startX, startY) {
   const wheels = [];
   for (let i = 0; i < 4; i++) {
     const w = new THREE.Group();
+    if (glb) { g.add(w); wheels.push(w); continue; }   // banh nam san trong model
     const lop = new THREE.Mesh(wheelGeo, lopMat); lop.castShadow = true; w.add(lop);
     // vanh: dia trung tam cong 5 nan hoa, nhin ra la banh xe chu khong phai cai lu
     const dia = new THREE.Mesh(new THREE.CylinderGeometry(h.banh * 0.58, h.banh * 0.58, h.benhBanh * 1.04, 14), vanhMat);
@@ -159,7 +228,8 @@ export function buildCar(scene, RAPIER, world, def, startX, startY) {
   blob.rotation.x = -Math.PI / 2;
   scene.add(blob);
 
-  return { body, col, vc, group: g, wheels, blob, def, wp, susRest };
+  return { body, col, vc, group: g, wheels, blob, def, wp, susRest,
+           banhGLB: glb ? glb.banhGLB : null };
 }
 
 /* Xoa het xe cu khoi the gioi va khoi canh, de doi sang xe khac. */
@@ -185,5 +255,14 @@ export function syncCar(car) {
     car.wheels[i].position.set(car.wp[i][0], y, car.wp[i][2]);
     const rot = car.vc.wheelRotation(i);
     if (rot != null) car.wheels[i].rotation.z = -rot;
+  }
+  /* Banh cua model .glb: quay tai cho theo goc quay trung binh cua 4 banh. */
+  if (car.banhGLB && car.banhGLB.length) {
+    let g0 = 0, n = 0;
+    for (let i = 0; i < 4; i++) { const r2 = car.vc.wheelRotation(i); if (r2 != null) { g0 += r2; n++; } }
+    if (n) {
+      const q = -g0 / n;
+      for (const b of car.banhGLB) b.node.rotation[b.truc] = b.goc0 + q;
+    }
   }
 }
