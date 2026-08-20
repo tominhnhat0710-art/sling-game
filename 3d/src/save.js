@@ -88,6 +88,9 @@ export function chiSo() {
     soNitro:    T.nitroCount + lv.ntank,
     sucNitro:   T.nitroPush + BUOC.npow * lv.npow,
     heSoTien:   1 + BUOC.money * lv.money,
+    // Dong co lan: luc bo va so giay nhien lieu. Nang cap Banh xe cung gop vao.
+    dongCoLuc:  T.dongCoGiaToc * (1 + BUOC.motorLuc * (lv.motor || 0)) * (ct.dongCo || 1),
+    dongCoGiay: T.dongCoGiay + BUOC.motorGiay * (lv.motor || 0) + 0.035 * lv.wheel,
     canBang:    ct.canBang
   };
 }

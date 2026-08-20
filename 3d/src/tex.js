@@ -12,11 +12,21 @@ function cv(n = 256) {
   c.width = c.height = n;
   return { c, x: c.getContext('2d') };
 }
+/* anisotropy toi da cua may. Phai set tu main.js sau khi co renderer. */
+export let ANISO = 4;
+export function datAniso(n) { ANISO = Math.max(4, n | 0); }
+
 function xong(c, lap = 1) {
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(lap, lap);
-  t.anisotropy = 4;
+  /* Do "dom dom" tren mat dat la moire: mot anh 256px bi lap gan 300 lan doc
+     theo map. Bat mipmap dung cach + anisotropy toi da thi het lap lanh. */
+  t.anisotropy = ANISO;
+  t.generateMipmaps = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.needsUpdate = true;
   return t;
 }
 const rr = (a, b) => a + Math.random() * (b - a);

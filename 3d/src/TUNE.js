@@ -97,9 +97,12 @@ export const TUNE = {
                           // xuyen qua dia hinh khi bay qua nhanh.
 
   /* --- bang tang toc --- */
-  padEvery:       185,    // khoang cach giua cac bang (met)
-  padFirst:       120,
+  padEvery:       115,    // khoang cach giua cac bang (met)
+  padFirst:        90,
   padGain:        0.17,   // bang dau tien cong 17% toc do
+  padAltAn:       7.0,    // do cao toi da con an duoc bang. Truoc 4.5 nen hay bay vuot qua
+  padLanNgang:    0.55,   // lan ngang qua bang thi an bao nhieu phan so voi roi tu tren
+  padDay:         6.5,    // luc day thang them, de lan ngang qua van thay ro
   padDecay:       0.62,   // bang sau chi con 62% suc bang truoc
   padLift:        5.5,    // day len bao nhieu m/s
   padNeedFall:    -4.0,   // phai ROI xuong bang moi an duoc, toc do roi toi thieu (m/s).
@@ -107,6 +110,16 @@ export const TUNE = {
                           // nen ban vong cung cao moi la cach choi dung.
 
   /* --- ma sat khi lan tren dat --- */
+  /* ---- DONG CO LAN: xe khong bao gio chet cung tai cho nua ----
+     Day la co che m yeu cau. Khi banh dang cham dat va con nhien lieu thi xe
+     tu bo them mot luc ve phia truoc. Doc len cung leo duoc. Nang cap Banh xe
+     va Dong co lan quyet dinh luc bo va so giay nhien lieu. */
+  dongCoGiaToc:   9.5,    // m/s^2 luc bo co ban khi dang lan
+  dongCoGiay:     1.8,    // so giay nhien lieu co ban
+  dongCoTran:     22,     // chi bo khi toc do ngang duoi muc nay
+  dongCoDoc:      1.35,   // doc len thi bo manh hon bao nhieu lan
+  dongCoNguong:   0.7,    // chi bo khi xe dung banh (up.y tren muc nay)
+
   groundDrag:     0.0058, // moi khung mat bao nhieu % toc do khi sat dat.
                           // Day la thu ngan khong cho xe lan mai khong dung.
                           // Ha tu 0.007 xuong de xe tron hon, lan them mot doan truoc khi dung.
@@ -118,12 +131,12 @@ export const TUNE = {
   /* --- ket thuc luot --- */
   /* Ket thuc luot khi xe khong tien them duoc nua, thay vi cat bang dong ho.
      Cat bang dong ho lam nguoi choi bi ngat giua luc con dang bay, rat vo ly. */
-  stallMet:       2,      // trong khoang thoi gian duoi day ma tien duoi bao nhieu met
+  stallMet:        8,     // tien duoc it hon muc nay trong stallGiay giay thi ket thuc luot
   stallGiay:      3.0,    // thi coi nhu het luot
   stopSpeed:      1.6,    // duoi toc do nay coi nhu da dung. Ha xuong tu 2.2 de xe duoc
                           // bo lan them den luc that su gan nhu dung han.
   stopFrames:     48,
-  maxSeconds:     120,   // chi la chot chan cuoi cung, binh thuong khong bao gio cham toi
+  maxSeconds:     90,     // chan tren tuyet doi cho mot luot
 
   /* --- camera --- */
   camAim:         [-18.0, 9.0, 13.0], // LUC NGAM: nhin tu ben canh, xe huong sang phai man hinh.
@@ -172,7 +185,7 @@ export const TUNE = {
 
   fogNear:        180,
   fogFar:         920,
-  shadowSpan:     46,     // vung co bong do quanh xe
+  shadowSpan:     34,     // vung co bong do quanh xe
   sunOffset:      [-14, 96, 16],  // huong nang. Gan nhu tren dinh dau, de bong do nam ngay
                                   // duoi xe chu khong lech ra mot chuc, tranh nhin thay 2 bong
   guideDots:      60,     // So hat cua duong ngam du bao. De 0 la tat.

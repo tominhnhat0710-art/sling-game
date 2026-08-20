@@ -28,6 +28,9 @@
   #right{text-align:right}
   #nitro{display:flex;gap:5px;justify-content:flex-end;margin-top:7px}
   .pip{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.2)}
+  #nlBar{width:76px;height:7px;border-radius:5px;background:rgba(255,255,255,.18);overflow:hidden;margin-left:auto}
+  #nlBar i{display:block;height:100%;width:100%;border-radius:5px;
+    background:linear-gradient(90deg,#ffd45e,#ff8a3d);transition:width .12s linear}
   .pip.on{background:linear-gradient(135deg,#ffd166,#ff6b35);box-shadow:0 0 9px rgba(255,140,66,.8)}
   .pip.cd{background:rgba(255,140,66,.35)}
 
@@ -176,6 +179,8 @@
       <div class="lbl" style="margin:0">Độ cao</div>
       <div id="alt" style="font-size:17px;font-weight:800">0 m</div>
       <div id="nitro"><i class="pip"></i><i class="pip"></i></div>
+      <div class="lbl" style="margin:7px 0 3px">Động cơ lăn</div>
+      <div id="nlBar"><i></i></div>
     </div>
   </div>
   <div id="dichBox" class="chip" style="display:none;position:absolute;left:50%;transform:translateX(-50%);

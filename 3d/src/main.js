@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import RAPIER from 'rapier';
 import { TUNE as T } from './TUNE.js';
+import { datAniso } from './tex.js';
 import { heightAt, buildWorld, destroyWorld, padX, matSanTai, setMap, layDoc } from './terrain.js';
 import { buildCar, syncCar, destroyCar, wheelPos } from './car.js';
 import { ChaseCam } from './camera.js';
@@ -33,6 +34,7 @@ rn.shadowMap.type = THREE.PCFSoftShadowMap;
    (chuan Khronos PBR Neutral) giu duoc do tuoi cua mau, dung cho kieu do hoa
    mau tuoi nay hon han. */
 rn.toneMapping = THREE.NeutralToneMapping;
+datAniso(rn.capabilities.getMaxAnisotropy());
 rn.toneMappingExposure = 1.05;
 document.body.appendChild(rn.domElement);
 
@@ -55,7 +57,7 @@ sky.scale.setScalar(2400); scene.add(sky);
 
 // Env map da lo mot phan anh sang nen, nen den hemisphere phai ha xuong nhieu,
 // khong thi canh bi bot mau va mat het do tuong phan.
-const hemi = new THREE.HemisphereLight(0xdaf1ff, 0xa8dd86, 0.32);
+const hemi = new THREE.HemisphereLight(0xdaf1ff, 0xa8dd86, 0.26);
 let envTex = null;
 function capNhatEnv(m) {
   if (envTex) envTex.dispose();
@@ -84,7 +86,7 @@ sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.bias = -0.0006;
 sun.shadow.normalBias = 0.035;
-sun.shadow.radius = 3;
+sun.shadow.radius = 2;
 const sc = sun.shadow.camera;
 sc.left = -T.shadowSpan; sc.right = T.shadowSpan;
 sc.top = T.shadowSpan; sc.bottom = -T.shadowSpan;
@@ -183,6 +185,7 @@ let phase = AIM;
 let aimA = deg(42), power = 0;
 let dragging = false, dragSx = 0, dragSy = 0, dragX = 0, dragY = 0;
 let nitroLeft = T.nitroCount, maxX = START_X, stillFor = 0, elapsed = 0, doneAt = 0;
+let nlLan = 0;   // nhien lieu dong co lan con lai, tinh bang giay
 let menuOpen = true, levelSuspend = 0, firstLandUp = null, nitroCd = 0;
 let tienX = START_X, tienT = 0;      // moc do 'con tien duoc khong'
 let dangTiepDat = false, daVeDich = false, tienThem = 0, nitroHoi = 0;
@@ -197,6 +200,7 @@ function resetRun() {
   firstLandUp = null; nitroCd = 0; tienX = START_X; tienT = 0; dangTiepDat = false;
   daVeDich = false; tienThem = 0; nitroHoi = 0;
   nitroLeft = CS.soNitro; maxX = START_X; stillFor = 0; elapsed = 0; levelSuspend = 0;
+  nlLan = CS.dongCoGiay;
   car.body.setLinearDamping(CS.canGio);
   car.col.setRestitution(T.chassisRest);
   for (let i = 0; i < 4; i++) car.vc.setWheelFrictionSlip(i, CS.bamDuong);
@@ -442,8 +446,29 @@ function stepPhysics(dt) {
 
   const ms = matSanTai(terrain.matSan, p.x);
   if (grounded) {
-    const d = 1 - CS.maSatLan * ms.maSat;
+    /* Ma sat lan: truoc day nhan thang moi buoc vat ly nen phu thuoc frame rate.
+       Gio dua ve dang luy thua theo dt, 60 buoc/giay la moc chuan. */
+    const d = Math.pow(Math.max(0, 1 - CS.maSatLan * ms.maSat), dt * 60);
     car.body.setLinvel({ x: v.x * d, y: v.y, z: v.z * d }, true);
+
+    /* ---- DONG CO LAN ----
+       Loi m bao: cham dat la dung hang, nhat la cho doc len. Gio khi banh cham
+       dat, xe dung banh va con nhien lieu thi tu bo them ve phia truoc. Doc len
+       thi bo manh hon. Nho vay nang cap Banh xe / Dong co lan co tac dung THAY
+       DUOC, va xe khong bao gio chet cung tai cho. */
+    upTmp.set(0, 1, 0).applyQuaternion(qCur.set(r0.x, r0.y, r0.z, r0.w));
+    const spNgang = Math.hypot(v.x, v.z);
+    if (nlLan > 0 && upTmp.y > T.dongCoNguong && spNgang < T.dongCoTran) {
+      const doc = (heightAt(p.x + 4, p.z) - heightAt(p.x, p.z)) / 4;   // >0 la dang len doc
+      const heSoDoc = 1 + Math.max(0, doc) * (T.dongCoDoc - 1) * 4;
+      const a = CS.dongCoLuc * heSoDoc * ms.maSat;
+      const v2 = car.body.linvel();
+      car.body.setLinvel({ x: v2.x + a * dt, y: v2.y, z: v2.z }, true);
+      nlLan -= dt;
+      if (rollTick++ % 4 === 0)
+        fx.burst(p.x - 1.6, heightAt(p.x, p.z) + 0.3, p.z, 1,
+                 { color: 0xc9c2b0, spread: 1.6, up: 1.8, life: 0.4, size: 0.6 });
+    }
     // bui bay ra khi lan nhanh
     const sp2 = Math.hypot(v.x, v.z);
     if (sp2 > T.rollDustSpeed && (rollTick++ % 3 === 0)) {
@@ -451,6 +476,15 @@ function stepPhysics(dt) {
       fx.burst(p.x + w[0], heightAt(p.x, p.z) + 0.25, p.z + w[2], 2,
                { color: 0xb3a473, spread: 2.5, up: 2.4, life: 0.55, size: 0.85 });
     }
+  }
+
+  /* Vat pham quay cho de nhin thay. Dong xu quay quanh truc dung nen mat xu
+     loe len, binh nitro va lo xo thi lac nhe. */
+  for (const vp of terrain.vatPham) {
+    if (vp.an) continue;
+    if (Math.abs(vp.x - p.x) > 160) continue;
+    if (vp.loai === 'tien') vp.mesh.rotation.y += dt * 2.6;
+    else { vp.mesh.rotation.y += dt * 1.5; vp.mesh.position.y = vp.y + Math.sin(elapsed * 2.4 + vp.x) * 0.35; }
   }
 
   /* --- CHUONG NGAI VAT --- */
@@ -519,17 +553,21 @@ function stepPhysics(dt) {
     setTimeout(() => $('dichBanner').classList.remove('on'), 2200);
   }
 
-  /* --- bang tang toc: phai ROI xuong moi an --- */
-  if (v.y < T.padNeedFall && alt < 4.5) {
+  /* --- bang tang toc ---
+     Truoc day bat buoc phai dang ROI xuong moi an (v.y < -4), nen lan ngang qua
+     thi khong co gi xay ra - dung nhu loi m bao. Gio di ngang qua la an, con roi
+     tu tren xuong thi an manh hon. */
+  if (alt < T.padAltAn) {
     let usedCount = 0;
     for (const pd of terrain.pads) if (pd.used) usedCount++;
     for (const pd of terrain.pads) {
-      if (pd.used || Math.abs(p.x - pd.x) > 7) continue;
-      const f = Math.pow(T.padDecay, usedCount);
+      if (pd.used || Math.abs(p.x - pd.x) > 7.5 || Math.abs(p.z) > 12) continue;
+      const roi = v.y < T.padNeedFall ? 1 : T.padLanNgang;   // lan ngang thi yeu hon
+      const f = Math.pow(T.padDecay, usedCount) * roi;
       pd.used = true;
       pd.mat.emissive.setHex(0x000000); pd.mat.color.setHex(0x7d8a84);
       const vv = car.body.linvel();
-      car.body.setLinvel({ x: vv.x * (1 + T.padGain * f * CS.heSoBang), y: Math.abs(vv.y) * 0.35 + T.padLift * f * CS.heSoBang, z: vv.z }, true);
+      car.body.setLinvel({ x: vv.x * (1 + T.padGain * f * CS.heSoBang) + T.padDay * f, y: Math.abs(vv.y) * 0.35 + T.padLift * f * CS.heSoBang, z: vv.z }, true);
       impactSkip = 3; levelSuspend = T.levelRecover * 0.6;
       fx.burst(pd.x, heightAt(pd.x, 0) + 0.6, 0, 30,
                { color: 0x3ddc97, spread: 7, up: 16, life: 0.9, size: 2.0, grav: -9 });
@@ -729,6 +767,9 @@ function updateHud() {
   const p = car.body.translation();
   $('dist').textContent = Math.max(0, Math.round(Math.max(maxX, p.x) - START_X)).toLocaleString('vi-VN');
   $('bestHud').textContent = SAVE.save.kyLuc.toLocaleString('vi-VN');
+  { const b = $('nlBar'); if (b && b.firstElementChild)
+      b.firstElementChild.style.width =
+        Math.max(0, Math.min(100, nlLan / Math.max(0.01, CS.dongCoGiay) * 100)) + '%'; }
   const pips = $('nitro').children;
   for (let i = 0; i < pips.length; i++)
     pips[i].className = 'pip' + (i < nitroLeft ? (nitroCd > 0 ? ' cd' : ' on') : '');

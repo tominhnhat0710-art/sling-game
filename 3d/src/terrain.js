@@ -254,6 +254,78 @@ function dungCoTuft(bien) {
   return g;
 }
 
+/* =======================================================================
+   VAT PHAM: phai NHIN RA duoc no la cai gi. Truoc day nitro la mot cai
+   hinh non, tien la mot cai dia mong, bong la mot qua cau tron - khong ai
+   doan ra duoc. Gio dung tung cai thanh mot vat the that.
+   ======================================================================= */
+
+/* Binh nitro: than tru, hai dau bo tron, co co dai, van trang, van o dinh */
+function dungBinhNitro() {
+  const g = new THREE.Group();
+  const than = new THREE.MeshStandardMaterial({ color: 0xff6a1f, roughness: 0.32, metalness: 0.35 });
+  const den  = new THREE.MeshStandardMaterial({ color: 0x2c2f38, roughness: 0.5, metalness: 0.6 });
+  const bac  = new THREE.MeshStandardMaterial({ color: 0xe8eef5, roughness: 0.25, metalness: 0.8 });
+
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 2.0, 12), than);
+  g.add(b);
+  for (const y of [1.0, -1.0]) {                       // hai dau bo tron
+    const c = new THREE.Mesh(new THREE.SphereGeometry(0.62, 12, 6,
+      0, Math.PI * 2, 0, Math.PI / 2), than);
+    c.position.y = y; if (y < 0) c.rotation.x = Math.PI; g.add(c);
+  }
+  for (const y of [0.42, -0.42]) {                     // hai dai sat
+    const d = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.18, 12), bac);
+    d.position.y = y; g.add(d);
+  }
+  const co = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.26, 0.5, 8), den);
+  co.position.y = 1.72; g.add(co);
+  const van = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.075, 6, 10), bac);
+  van.position.y = 1.98; van.rotation.x = Math.PI / 2; g.add(van);
+  return g;
+}
+
+/* Dong xu: vanh day, mat trong lom, co mot thanh ngang nhu chu S */
+function dungDongXu() {
+  const g = new THREE.Group();
+  const vang  = new THREE.MeshStandardMaterial({ color: 0xffc93c, roughness: 0.22, metalness: 0.9 });
+  const vangD = new THREE.MeshStandardMaterial({ color: 0xd99a10, roughness: 0.3, metalness: 0.85 });
+  const than = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.26, 20), vangD);
+  than.rotation.x = Math.PI / 2; g.add(than);
+  const vanh = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.15, 7, 22), vang);
+  g.add(vanh);
+  for (const z of [0.15, -0.15]) {                     // mat dong xu hai ben
+    const m = new THREE.Mesh(new THREE.CircleGeometry(0.9, 20), vang);
+    m.position.z = z; if (z < 0) m.rotation.y = Math.PI; g.add(m);
+  }
+  for (const z of [0.2, -0.2]) {                       // dau tien dap noi
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.05, 0.1), vangD);
+    t.position.z = z; g.add(t);
+    const t2 = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.19, 0.1), vangD);
+    t2.position.set(0, 0.3, z); g.add(t2);
+    const t3 = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.19, 0.1), vangD);
+    t3.position.set(0, -0.3, z); g.add(t3);
+  }
+  return g;
+}
+
+/* Lo xo nhun: bon vong xoay xep len nhau tren mot de tron. Nhin la biet nhay. */
+function dungLoXo() {
+  const g = new THREE.Group();
+  const xanh = new THREE.MeshStandardMaterial({ color: 0x3ff0c0, roughness: 0.25, metalness: 0.55 });
+  const de   = new THREE.MeshStandardMaterial({ color: 0x1d5f52, roughness: 0.6, metalness: 0.3 });
+  const d = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.1, 0.26, 16), de);
+  d.position.y = -0.9; g.add(d);
+  for (let k = 0; k < 4; k++) {
+    const v = new THREE.Mesh(new THREE.TorusGeometry(0.72 - k * 0.06, 0.15, 6, 16), xanh);
+    v.position.y = -0.62 + k * 0.42; v.rotation.x = Math.PI / 2;
+    v.rotation.z = k * 0.4; g.add(v);
+  }
+  const mu = new THREE.Mesh(new THREE.SphereGeometry(0.62, 12, 8), xanh);
+  mu.position.y = 1.16; mu.scale.y = 0.66; g.add(mu);
+  return g;
+}
+
 /* Gop mot Group thanh mot BufferGeometry duy nhat de dung InstancedMesh. */
 function gopGroup(g) {
   const geos = [];
@@ -270,6 +342,27 @@ function gopGroup(g) {
     for (const k of Object.keys(gg.attributes)) if (!['position', 'normal', 'color'].includes(k)) gg.deleteAttribute(k);
     geos.push(gg);
   });
+  return geos;
+}
+
+/* AO gia: dinh nao nam thap trong vat the thi toi hon. Rat re, va la thu lam
+   cay/da/nha trong co khoi va "dinh xuong dat" thay vi phang nhu bia carton. */
+function boAO(geos, manh = 0.42) {
+  let lo = Infinity, hi = -Infinity;
+  for (const g of geos) {
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < lo) lo = y; if (y > hi) hi = y; }
+  }
+  const cao = Math.max(0.001, hi - lo);
+  for (const g of geos) {
+    const p = g.attributes.position, c = g.attributes.color;
+    if (!c) continue;
+    for (let i = 0; i < p.count; i++) {
+      const t = (p.getY(i) - lo) / cao;
+      const k = 1 - manh * (1 - Math.min(1, Math.pow(t, 0.55)));
+      c.setXYZ(i, c.getX(i) * k, c.getY(i) * k, c.getZ(i) * k);
+    }
+  }
   return geos;
 }
 
@@ -333,13 +426,24 @@ export function buildWorld(scene, RAPIER, world, map) {
     tmp.lerp(cDoc, kDat * 0.85).lerp(cDa, kDa * 0.8);
     /* van mau tan nhe tren cho phang, de dong bang khong con la mot mang mau duy nhat */
     const vet = fbm2(x * 0.9, z * 0.9, (map.seed || 1) + 31) * 2 - 1;
-    tmp.offsetHSL(vet * 0.016, vet * 0.05, vet * 0.055);
+    const to  = nhieu2(x / 130, z / 130, (map.seed || 1) + 47) * 2 - 1;   // van lon
+    tmp.offsetHSL(vet * 0.02 + to * 0.03, vet * 0.06 - 0.05 + to * 0.09, vet * 0.06 + to * 0.05);
+
+    /* ---- LOI XE: mot vet dat mon chay doc giua map ----
+       Anh m gui nao cung co mot duong mon, mot long suoi hay mot dai da vach
+       ngang canh. Khong co no thi mat dat chi la mot mang mau khong loi ra loi vao. */
+    const tim = 5 + 13 * (nhieu2(x / 210, 0, (map.seed || 1) + 61) * 2 - 1);
+    const bAn = Math.abs(z - tim);
+    const kLoi = Math.max(0, Math.min(1, 1 - (bAn - 5.5) / 7));
+    if (kLoi > 0) tmp.lerp(cDoc, kLoi * 0.78).offsetHSL(0, -0.05 * kLoi, -0.03 * kLoi);
     cols[i * 3] = tmp.r; cols[i * 3 + 1] = tmp.g; cols[i * 3 + 2] = tmp.b;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
   geo.computeVertexNormals();
   const tDat = texDat(map.texDat || 'co');
-  tDat.repeat.set(LEN / 7, T.worldWidth / 7);
+  /* Truoc day lap LEN/7 = gan 300 lan, gay moire lap lanh nhu dom dom.
+     Ha xuong con 1 lan moi 26 m, cong voi mipmap va anisotropy thi mat dat min. */
+  tDat.repeat.set(LEN / 26, T.worldWidth / 26);
   const mesh = them(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
     vertexColors: true, map: tDat, roughness: 0.95, metalness: 0, flatShading: true, envMapIntensity: 0.22
   })));
@@ -383,16 +487,43 @@ export function buildWorld(scene, RAPIER, world, map) {
   /* ---- bang tang toc ---- */
   const pads = [];
   const texPadShared = texPad();
-  const padGeo = new THREE.BoxGeometry(9, 0.5, 13);
+  /* Bang tang toc that: mot cai DOC NGHIENG co thanh chan hai ben va vien phat
+     sang, khong con la mot tam phang chim trong dat nhu truoc. */
+  const padSau = new THREE.Shape();
+  padSau.moveTo(-6.0, 0); padSau.lineTo(4.2, 0); padSau.lineTo(5.4, 2.55);
+  padSau.lineTo(5.4, 3.0); padSau.lineTo(-6.0, 0.5); padSau.lineTo(-6.0, 0);
+  const padGeo = new THREE.ExtrudeGeometry(padSau,
+    { depth: 22, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.16, bevelSegments: 1 });
+  padGeo.translate(0, 0, -11);   // hinh nghieng theo huong bay (X), be day 13 m theo Z
+  const rayGeo = new THREE.BoxGeometry(10.6, 0.5, 0.62);   // thanh chan
+  const vienGeo = new THREE.BoxGeometry(10.2, 0.16, 0.3);
   for (let i = 0; padX(i) < DAI - 200; i++) {
     const x = padX(i);
     const mat = new THREE.MeshStandardMaterial({ map: texPadShared, emissive: 0x1a8a55,
-      emissiveIntensity: 0.5, roughness: 0.35 });
-    const p = them(new THREE.Mesh(padGeo, mat));
-    p.position.set(x, heightAt(x, 0) + 0.25, 0);
-    p.rotation.z = -Math.atan(slopeAt(x));
-    p.receiveShadow = true;
-    pads.push({ x, mesh: p, mat, used: false });
+      emissiveIntensity: 0.42, roughness: 0.42, envMapIntensity: 0.5 });
+    const nhom = new THREE.MeshStandardMaterial({ color: 0xd7dee8, roughness: 0.35, metalness: 0.7 });
+    const vienMat = new THREE.MeshBasicMaterial({ color: 0x62ffc0 });
+    const grp = them(new THREE.Group());
+    const p = new THREE.Mesh(padGeo, mat);
+    p.castShadow = true; p.receiveShadow = true; grp.add(p);
+    for (const z of [11.1, -11.1]) {                 // thanh chan hai ben
+      const r = new THREE.Mesh(rayGeo, nhom);
+      r.position.set(-0.3, 1.0, z); r.rotation.z = 0.17; r.castShadow = true; grp.add(r);
+      const vi = new THREE.Mesh(vienGeo, vienMat);
+      vi.position.set(-0.3, 1.32, z); vi.rotation.z = 0.17; grp.add(vi);
+    }
+    /* Ba mui nhon chi ve phia truoc tren mat doc, de nhin la biet day la bang
+       tang toc chu khong phai mot tam tham mau xanh. */
+    for (let k = 0; k < 3; k++) {
+      const mn = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.4, 4),
+        new THREE.MeshBasicMaterial({ color: 0xeafff6 }));
+      mn.rotation.x = -Math.PI / 2; mn.rotation.y = Math.PI / 4;
+      mn.position.set(-3.4 + k * 3.1, 0.62 + k * 0.72, 0);
+      mn.rotation.z = 0.24; mn.scale.set(1, 1, 0.22); grp.add(mn);
+    }
+    grp.position.set(x, heightAt(x, 0) + 0.06, 0);
+    grp.rotation.z = -Math.atan(slopeAt(x));
+    pads.push({ x, mesh: grp, mat, used: false });
   }
 
   /* ---- CHUONG NGAI VAT ---- */
@@ -432,9 +563,12 @@ export function buildWorld(scene, RAPIER, world, map) {
   /* ---- VAT PHAM ---- */
   const vatPham = [];
   {
-    const geoNitro = new THREE.ConeGeometry(1.0, 2.2, 7);
-    const geoTien = new THREE.CylinderGeometry(1.1, 1.1, 0.3, 12);
-    const geoBong = new THREE.SphereGeometry(1.15, 9, 7);
+    /* Ba vat the dung san roi gop lai, moi loai chi ton 1 draw call.
+       Kem mot vong sang duoi chan de nhin thay tu xa tren moi nen. */
+    const geoNitro = nhapGeo(boAO(gopGroup(dungBinhNitro()), 0.2));
+    const geoTien  = nhapGeo(boAO(gopGroup(dungDongXu()), 0.15));
+    const geoBong  = nhapGeo(boAO(gopGroup(dungLoXo()), 0.2));
+    const geoHao   = new THREE.TorusGeometry(1.9, 0.11, 6, 20);
     /* Vat pham xep thanh CHUM 3 den 5 cai mot hang, cung do cao va cung z.
        Truoc day rai le te thi bay ca luot chi an duoc 0 den 2 cai, gan nhu vo nghia.
        Xep thanh hang thi bay dung tuyen la quet duoc ca chum, thay ro cong suc ngam. */
@@ -451,10 +585,14 @@ export function buildWorld(scene, RAPIER, world, map) {
         const xx = x + k * 9;
         const yy = heightAt(xx, z) + cao;
         const m = them(new THREE.Mesh(g3, new THREE.MeshStandardMaterial({
-          color: vp.mau, emissive: vp.mau, emissiveIntensity: 0.45, roughness: 0.3, metalness: 0.2
+          vertexColors: true, roughness: 0.3, metalness: 0.45,
+          emissive: vp.mau, emissiveIntensity: 0.16, envMapIntensity: 1.1
         })));
         m.position.set(xx, yy, z);
-        if (loai === 'tien') m.rotation.z = Math.PI / 2;
+        m.castShadow = true;
+        const hao = new THREE.Mesh(geoHao, new THREE.MeshBasicMaterial({
+          color: vp.mau, transparent: true, opacity: 0.5 }));
+        hao.rotation.x = Math.PI / 2; hao.position.y = -1.5; m.add(hao);
         vatPham.push({ loai, x: xx, y: yy, z, mesh: m, an: false, bk: vp.bk });
       }
       x += soCai * 9 + (34 + rnd(i + 13) * 46) / Math.max(0.25, map.vatPham);
@@ -506,7 +644,7 @@ export function buildWorld(scene, RAPIER, world, map) {
     for (let variant = 0; variant < 3; variant++) {
       const mauV = new THREE.Color(mau[variant % mau.length]).offsetHSL(0, 0, (variant - 1) * 0.05);
       const proto = dungCay(map.cay.kieu, mauV.getHex(), map.cay.than, variant + 1);
-      const merged = nhapGeo(gopGroup(proto));
+      const merged = nhapGeo(boAO(gopGroup(proto)));
       const N = Math.round(150 * map.cay.matDo);
       const im = them(new THREE.InstancedMesh(merged, new THREE.MeshStandardMaterial({
         vertexColors: true, roughness: 0.9, flatShading: true, envMapIntensity: 0.25
@@ -560,7 +698,7 @@ export function buildWorld(scene, RAPIER, world, map) {
         proto.add(canh);
       }
     }
-    const merged = nhapGeo(gopGroup(proto));
+    const merged = nhapGeo(boAO(gopGroup(proto)));
     const im = them(new THREE.InstancedMesh(merged, new THREE.MeshStandardMaterial({
       vertexColors: true, roughness: 0.85, flatShading: true, envMapIntensity: 0.25
     }), Math.max(1, N)));
@@ -680,7 +818,7 @@ export function buildWorld(scene, RAPIER, world, map) {
   const viTriVat = [];   // ghi lai de dat dom bong tiep dat
   for (let bien = 0; bien < 3; bien++) {
     const proto = dungCoTuft(bien + 1);
-    const merged = nhapGeo(gopGroup(proto));
+    const merged = nhapGeo(boAO(gopGroup(proto)));
     const N = Math.round(700 * (map.hoa.matDo || 1));
     const mauCo = new THREE.Color(map.dat.tren).offsetHSL(0.03, 0.18, 0.06 + bien * 0.05);
     const im = them(new THREE.InstancedMesh(merged, new THREE.MeshStandardMaterial({
