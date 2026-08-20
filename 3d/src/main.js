@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import RAPIER from 'rapier';
 import { TUNE as T } from './TUNE.js';
-import { heightAt, buildWorld, destroyWorld, padX, matSanTai, setMap } from './terrain.js';
+import { heightAt, buildWorld, destroyWorld, padX, matSanTai, setMap, layDoc } from './terrain.js';
 import { buildCar, syncCar, destroyCar, wheelPos } from './car.js';
 import { ChaseCam } from './camera.js';
 import { Fx } from './fx.js';
@@ -9,6 +9,7 @@ import { Audio } from './audio.js';
 import { UPGRADES, giaCap } from './upgrades.js';
 import * as SAVE from './save.js';
 import { CARS } from './cars.js';
+import { taoEnv, taoComposer } from './gfx.js';
 import { MAPS, MATSAN } from './maps.js';
 
 const $ = id => document.getElementById(id);
@@ -27,9 +28,12 @@ const rn = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-per
 rn.setSize(innerWidth, innerHeight);
 rn.setPixelRatio(Math.min(devicePixelRatio, 2));
 rn.shadowMap.enabled = true;
-rn.shadowMap.type = THREE.PCFShadowMap;
-rn.toneMapping = THREE.ACESFilmicToneMapping;
-rn.toneMappingExposure = 1.22;
+rn.shadowMap.type = THREE.PCFSoftShadowMap;
+/* ACES lam mau bi bac va bot: troi xanh thanh xam trang. NeutralToneMapping
+   (chuan Khronos PBR Neutral) giu duoc do tuoi cua mau, dung cho kieu do hoa
+   mau tuoi nay hon han. */
+rn.toneMapping = THREE.NeutralToneMapping;
+rn.toneMappingExposure = 1.05;
 document.body.appendChild(rn.domElement);
 
 /* --- troi gradient, di theo camera --- */
@@ -49,24 +53,38 @@ const sky = new THREE.Mesh(
 );
 sky.scale.setScalar(2400); scene.add(sky);
 
-const hemi = new THREE.HemisphereLight(0xdaf1ff, 0xa8dd86, 1.05);
+// Env map da lo mot phan anh sang nen, nen den hemisphere phai ha xuong nhieu,
+// khong thi canh bi bot mau va mat het do tuong phan.
+const hemi = new THREE.HemisphereLight(0xdaf1ff, 0xa8dd86, 0.32);
+let envTex = null;
+function capNhatEnv(m) {
+  if (envTex) envTex.dispose();
+  envTex = taoEnv(rn, m.troi.tren, m.troi.giua, m.troi.duoi);
+  scene.environment = envTex;
+}
+
 function apMauMap(m) {
   sky.material.uniforms.cTop.value.setHex(m.troi.tren);
   sky.material.uniforms.cMid.value.setHex(m.troi.giua);
   sky.material.uniforms.cBot.value.setHex(m.troi.duoi);
-  scene.fog.color.setHex(m.troi.giua);
-  scene.fog.near = m.suong[0]; scene.fog.far = m.suong[1];
-  sun.color.setHex(m.nang.mau); sun.intensity = m.nang.cuong;
+  // Mau suong lay trung binh giua troi va dat, va day ra xa hon, de canh xa mo dan
+  // chu khong lam ca canh bi phu mot lop trang.
+  scene.fog.color.setHex(m.troi.giua).lerp(new THREE.Color(m.dat.duoi), 0.28);
+  scene.fog.near = m.suong[0] * 1.6; scene.fog.far = m.suong[1] * 1.7;
+  sun.color.setHex(m.nang.mau); sun.intensity = m.nang.cuong * 1.25;
   hemi.color.setHex(m.nang.hemiTroi); hemi.groundColor.setHex(m.nang.hemiDat);
-  hemi.intensity = m.nang.hemiCuong;
+  hemi.intensity = m.nang.hemiCuong * 0.3;
   world.gravity = { x: 0, y: m.trongLuc, z: 0 };
+  capNhatEnv(m);
 }
 
 /* --- anh sang --- */
 const sun = new THREE.DirectionalLight(0xfff2d6, 2.35);
 sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.bias = -0.0012;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0006;
+sun.shadow.normalBias = 0.035;
+sun.shadow.radius = 3;
 const sc = sun.shadow.camera;
 sc.left = -T.shadowSpan; sc.right = T.shadowSpan;
 sc.top = T.shadowSpan; sc.bottom = -T.shadowSpan;
@@ -136,7 +154,7 @@ scene.add(ring);
 const GY = heightAt(START_X, 0);
 const ANCHOR = new THREE.Vector3(START_X, GY + T.slingHeight, 0);
 const sling = new THREE.Group(); scene.add(sling);
-const frameMat = new THREE.MeshStandardMaterial({ color: 0xd4794f, roughness: 0.62, metalness: 0.1, flatShading: true });
+const frameMat = new THREE.MeshStandardMaterial({ color: 0xd4794f, roughness: 0.6, metalness: 0.12, flatShading: true, envMapIntensity: 0.35 });
 for (const z of [T.slingSpan, -T.slingSpan]) {
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, T.slingHeight + 0.9, 7), frameMat);
   post.position.set(START_X, GY + (T.slingHeight + 0.9) / 2, z);
@@ -167,7 +185,7 @@ let dragging = false, dragSx = 0, dragSy = 0, dragX = 0, dragY = 0;
 let nitroLeft = T.nitroCount, maxX = START_X, stillFor = 0, elapsed = 0, doneAt = 0;
 let menuOpen = true, levelSuspend = 0, firstLandUp = null, nitroCd = 0;
 let tienX = START_X, tienT = 0;      // moc do 'con tien duoc khong'
-let dangTiepDat = false, daVeDich = false, tienThem = 0;
+let dangTiepDat = false, daVeDich = false, tienThem = 0, nitroHoi = 0;
 const upTmp = new THREE.Vector3();
 let pv = { x: 0, y: 0, z: 0 }, impactSkip = 0, rollTick = 0;
 const m4 = new THREE.Matrix4(), q1 = new THREE.Quaternion(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
@@ -177,7 +195,7 @@ function resetRun() {
   phase = AIM; aimA = deg(42); power = 0; dragging = false;
   CS = SAVE.chiSo();
   firstLandUp = null; nitroCd = 0; tienX = START_X; tienT = 0; dangTiepDat = false;
-  daVeDich = false; tienThem = 0;
+  daVeDich = false; tienThem = 0; nitroHoi = 0;
   nitroLeft = CS.soNitro; maxX = START_X; stillFor = 0; elapsed = 0; levelSuspend = 0;
   car.body.setLinearDamping(CS.canGio);
   car.col.setRestitution(T.chassisRest);
@@ -190,7 +208,7 @@ function resetRun() {
   car.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
   car.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
   pv = { x: 0, y: 0, z: 0 };
-  for (const p of terrain.pads) { p.used = false; p.mat.color.setHex(0x2ce88f); p.mat.emissive.setHex(0x1a8a55); }
+  for (const p of terrain.pads) { p.used = false; p.mat.color.setHex(0xffffff); p.mat.emissive.setHex(0x1a8a55); }
   for (const vp of terrain.vatPham) { vp.an = false; vp.mesh.visible = true; }
   for (const c of terrain.chuongNgai) {
     if (c.song) continue;
@@ -245,7 +263,7 @@ function doLaunch() {
   pv = car.body.linvel();
   impactSkip = 3;
   const p = car.body.translation();
-  fx.burst(p.x - 1.5, p.y - 0.3, p.z, 26, { color: 0xb59a63, spread: 10, up: 8, life: 0.8, size: 1.9 });
+  fx.burst(p.x - 1.5, p.y - 0.3, p.z, 34, { color: 0xb59a63, spread: 17, up: 11, life: 0.55, size: 0.95 });
   chase.addShake(T.shakeLaunch * (0.5 + power));
   audio.launch(power);
 }
@@ -472,7 +490,9 @@ function stepPhysics(dt) {
     if (Math.abs(p.y - vp.y) > T.banKinhAn || Math.abs(p.z - vp.z) > T.banKinhAn + 3) continue;
     vp.an = true; vp.mesh.visible = false;
     if (vp.loai === 'nitro') {
-      nitroLeft = Math.min(CS.soNitro + 2, nitroLeft + 1);
+      if (nitroHoi >= T.nitroHoiToiDa) { vp.an = false; vp.mesh.visible = true; continue; }
+      nitroHoi++;
+      nitroLeft = Math.min(CS.soNitro + 1, nitroLeft + 1);
       fx.burst(vp.x, vp.y, vp.z, 20, { color: 0xff8a3d, spread: 6, up: 6, life: 0.6, size: 1.5, grav: -4 });
       audio.whoosh();
     } else if (vp.loai === 'tien') {
@@ -507,7 +527,7 @@ function stepPhysics(dt) {
       if (pd.used || Math.abs(p.x - pd.x) > 7) continue;
       const f = Math.pow(T.padDecay, usedCount);
       pd.used = true;
-      pd.mat.color.setHex(0x6a7d74); pd.mat.emissive.setHex(0x000000);
+      pd.mat.emissive.setHex(0x000000); pd.mat.color.setHex(0x7d8a84);
       const vv = car.body.linvel();
       car.body.setLinvel({ x: vv.x * (1 + T.padGain * f * CS.heSoBang), y: Math.abs(vv.y) * 0.35 + T.padLift * f * CS.heSoBang, z: vv.z }, true);
       impactSkip = 3; levelSuspend = T.levelRecover * 0.6;
@@ -783,7 +803,7 @@ function loop(ts) {
   sun.target.position.set(p.x, p.y, p.z);
 
   updateHud();
-  rn.render(scene, cam);
+  PP.composer.render();
   requestAnimationFrame(loop);
 }
 
@@ -933,6 +953,9 @@ $('btnMute').addEventListener('click', e => {
 $('btnMute').addEventListener('pointerdown', e => e.stopPropagation());
 
 apMauMap(MAP);
+const PP = taoComposer(rn, scene, cam, 1);
+addEventListener('resize', () => PP.composer.setSize(innerWidth, innerHeight));
+
 resetRun();
 moGaRa();
 $('loading').style.display = 'none';
@@ -952,7 +975,18 @@ window.__game = {
   get resultShown() { return document.getElementById('result').classList.contains('on'); },
   get physPerFrame() { return physMs / Math.max(1, frames); },
   get fxCount() { return fx.p.length; },
-  get info() { return { tris: rn.info.render.triangles, calls: rn.info.render.calls }; },
+  get info() {
+    let tri = 0, mesh = 0;
+    scene.traverse(o => {
+      if (!o.isMesh && !o.isInstancedMesh) return;
+      const g = o.geometry; if (!g) return;
+      const n = g.index ? g.index.count / 3 : (g.attributes.position ? g.attributes.position.count / 3 : 0);
+      tri += n * (o.isInstancedMesh ? o.count : 1); mesh++;
+    });
+    return { tris: Math.round(tri), calls: mesh };
+  },
+  get scene() { return scene; },
+  get cam() { return cam; },
   get carPos() { const p = car.body.translation(); return { x: p.x, y: p.y, z: p.z }; },
   get groundUnderCar() { const p = car.body.translation(); return heightAt(p.x, p.z); },
   get landingX() { return predictLanding(); },
@@ -961,6 +995,7 @@ window.__game = {
   get daVeDich() { return daVeDich; }, get dichX() { return terrain.dichX; },
   get soChuongNgai() { return terrain.chuongNgai.length; }, get soVatPham() { return terrain.vatPham.length; },
   get soMatSan() { return terrain.matSan.length; },
+  get soDoc() { return layDoc().length; },
   get vatPhamDaAn() { return terrain.vatPham.filter(v => v.an).length; },
   get chuongNgaiDaVo() { return terrain.chuongNgai.filter(c => !c.song).length; },
   choMap(id) { SAVE.save.kyLuc = 99999; SAVE.chonMap(id); doiMap(); return true; },

@@ -15,16 +15,17 @@ export const UPGRADES = [
 export const giaCap = (u, lv) => Math.round(u.c0 * Math.pow(u.gr, lv) / 5) * 5;
 
 /* Moi cap cong them bao nhieu. Sua o day de can bang lai. */
+/* Buoc tang moi cap. Da HA XUONG so voi ban truoc, vi do duoc la cap toi da bay
+   toi 2.400 m, tuc la mot cu phong an gon ca map, khong con gi de choi.
+   Muc tieu moi: cap 0 khoang 200-300 m, cap toi da khoang 1.000-1.300 m,
+   tuc chenh khoang 4 lan chu khong phai 8 lan. */
 export const BUOC = {
-  power: 3.2,        // m/s moi cap
-  wheelGrip: 0.10,   // an bang tang toc manh hon
-  wheelRoll: 0.08,   // lan it mat toc do hon
-  wheelBounce: 0.045,// nay cao hon khi cham dat. Day la don manh nhat cua Banh xe
-  aero: 0.0022,      // giam can gio
-  aeroGlide: 0.038,  // GIAM TRONG LUC khi dang bay, moi cap 3.8%. Cap 9 = nhe hon 34%.
-                     // Da do thuc te: chi giam can gio thoi thi cap 0 va cap 9 bay xa y het
-                     // nhau, nang cap coi nhu khong ton tai. Chuyen sang cho xe luon thi
-                     // moi thanh mot nang cap doc duoc.
-  npow: 2.6,         // m/s moi cap
-  money: 0.35        // he so tien moi cap
+  power: 1.55,       // m/s moi cap. Truoc 3.2
+  wheelGrip: 0.07,   // an bang tang toc manh hon
+  wheelRoll: 0.06,   // lan it mat toc do hon
+  wheelBounce: 0.026,// nay cao hon khi cham dat
+  aero: 0.0016,      // giam can gio
+  aeroGlide: 0.019,  // GIAM TRONG LUC khi dang bay. Cap 9 = nhe hon 17%. Truoc la 34%.
+  npow: 1.25,        // m/s moi cap. Truoc 2.6
+  money: 0.4         // he so tien moi cap. Tang len de bu lai tam xa ngan hon
 };

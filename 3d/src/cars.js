@@ -12,8 +12,18 @@
    ========================================================================= */
 export const CARS = [
   {
-    id: 'co', ten: 'Xe cỏ', mota: 'Cân bằng, dễ chơi. Mốc để so sánh mọi xe khác.',
+    id: 'golf', ten: 'Xe golf', mota: 'Xe sân golf. Chậm, nhẹ, nhưng là chỗ bắt đầu.',
     gia: 0, moKhi: 0, model: null,
+    mau: 0xf2f4f8, mauPhu: 0x2a2f38,
+    hinh: { dai: 1.15, cao: 0.4, rong: 0.72, kieu: 'golf', banh: 0.34, benhBanh: 0.26 },
+    ct: { khoiLuong: 0.62, tocDo: 0.74, doNay: 0.62, maSatLan: 1.75, canGio: 1.5,
+          luon: 0, canBang: 1.3, heSoBang: 0.7, susRest: 0.9 },
+    manh: 'Rất nhẹ nên nảy tốt, cực ổn định',
+    yeu: 'Phóng yếu nhất, cản gió cao nhất'
+  },
+  {
+    id: 'co', ten: 'Xe cỏ', mota: 'Hatchback phổ thông. Cân bằng, mốc để so sánh.',
+    gia: 1200, moKhi: 120, model: null,
     mau: 0xd8382f, mauPhu: 0x2a2f38,
     hinh: { dai: 1.55, cao: 0.48, rong: 0.82, kieu: 'hatch', banh: 0.45, benhBanh: 0.32 },
     ct: { khoiLuong: 1.0, tocDo: 1.0, doNay: 1.0, maSatLan: 1.0, canGio: 1.0,
@@ -35,7 +45,7 @@ export const CARS = [
     id: 'diahinh', ten: 'Xe địa hình', mota: 'Bánh to, giảm xóc dài. Đi xa nhờ rất nhiều cú nảy.',
     gia: 6500, moKhi: 500, model: null,
     mau: 0x3ddc97, mauPhu: 0x25302b,
-    hinh: { dai: 1.7, cao: 0.55, rong: 0.9, kieu: 'diahinh', banh: 0.68, benhBanh: 0.44 },
+    hinh: { dai: 1.7, cao: 0.55, rong: 0.9, kieu: 'pickup', banh: 0.68, benhBanh: 0.48 },
     ct: { khoiLuong: 1.15, tocDo: 1.08, doNay: 1.7, maSatLan: 0.7, canGio: 1.0,
           luon: 0.05, canBang: 1.15, heSoBang: 1.42, susRest: 1.7 },
     manh: 'Nảy cao nhất, ăn bảng tăng tốc mạnh nhất, mạnh nhất ở giữa game',
@@ -45,12 +55,22 @@ export const CARS = [
     id: 'dua', ten: 'Xe đua', mota: 'Nhẹ và cực nhanh, nhưng khó bảo và mất tốc độ khi chạm đất.',
     gia: 22000, moKhi: 1200, model: null,
     mau: 0xffc233, mauPhu: 0x1c1c22,
-    hinh: { dai: 1.85, cao: 0.34, rong: 0.9, kieu: 'dua', banh: 0.40, benhBanh: 0.40 },
-    ct: { khoiLuong: 0.72, tocDo: 1.32, doNay: 0.88, maSatLan: 1.85, canGio: 0.6,
-          luon: 0.1, canBang: 0.7, heSoBang: 0.82, susRest: 0.7 },
+    hinh: { dai: 1.85, cao: 0.34, rong: 0.9, kieu: 'gt', banh: 0.40, benhBanh: 0.42 },
+    ct: { khoiLuong: 0.72, tocDo: 1.16, doNay: 0.78, maSatLan: 1.9, canGio: 0.62,
+          luon: 0.08, canBang: 0.7, heSoBang: 0.78, susRest: 0.7 },
     manh: 'Phóng mạnh nhất, ít cản gió nhất, có lượn nhẹ',
     yeu: 'Gầm thấp nên ăn bảng tăng tốc kém, lăn trên đất mất tốc độ rất nhanh'
+  },
+  {
+    id: 'sieu', ten: 'Siêu xe', mota: 'Nét dao, cực thấp, cánh gió to. Nhanh nhất, khó bảo nhất.',
+    gia: 55000, moKhi: 1150, model: null,
+    mau: 0xe8332e, mauPhu: 0x14161c,
+    hinh: { dai: 2.0, cao: 0.3, rong: 0.96, kieu: 'sieu', banh: 0.42, benhBanh: 0.46 },
+    ct: { khoiLuong: 0.68, tocDo: 1.24, doNay: 0.66, maSatLan: 2.3, canGio: 0.52,
+          luon: 0.12, canBang: 0.62, heSoBang: 0.62, susRest: 0.62 },
+    manh: 'Phóng cực mạnh, cản gió thấp nhất, có lượn',
+    yeu: 'Gầm sát đất nên ăn bảng kém nhất, lăn mất tốc độ nhanh nhất'
   }
-];
+];;
 
 export const xeTheoId = id => CARS.find(c => c.id === id) || CARS[0];

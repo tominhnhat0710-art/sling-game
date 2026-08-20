@@ -9,14 +9,14 @@ export const TUNE = {
                           // dat duoc, neu khong xe se bay ra khoi ria ban do.
   worldBack:      150,    // keo dai dia hinh ve phia sau vach xuat phat bao nhieu met.
                           // Can co, neu khong thi luc ngam se thay ria dia hinh cat ngang man hinh.
-  worldWidth:     150,    // be rong dia hinh
+  worldWidth:     300,    // be rong dia hinh. Rong ra de the gioi trong do so hon
   segX:           560,    // so o luoi doc theo huong bay. Cao hon = dia hinh min hon, may nang hon
-  segZ:           14,
+  segZ:           52,     // o luoi ngang. Cao de vach thung lung va go hai ben ro net
 
   /* --- dia hinh --- */
   hillAmp:        7.0,    // do cao doi
   hillWave:       78,     // buoc song doi. Nho lai = doi nhon, nay dien hon
-  flatRunway:     45,     // doan phang o vach xuat phat
+  flatRunway:     26,     // doan phang o vach xuat phat
 
   /* --- phong xe kieu sling: keo va tha --- */
   launchSpeed:    52,     // toc do phong khi keo cang toi da (m/s)
@@ -55,7 +55,7 @@ export const TUNE = {
      xoay, xe nay cao ma van giu duoc the dung banh. */
   chassisRest:    0.06,   // do nay cua thung xe. De thap, dung tang.
   nayBase:        0.34,   // nay co dieu khien khi chua nang cap
-  nayMax:         0.86,   // tran cua nay co dieu khien
+  nayMax:         0.76,   // tran cua nay co dieu khien. Chuoi nay la nguon tam xa lon nhat
   nayMinFall:     3.5,    // roi nhanh hon nay (m/s) thi moi tinh la mot cu nay
   bounceBase:     0.20,   // (khong con dung, giu lai cho tuong thich)
   linDamp:        0.05,   // can gio. Cao = mat toc do nhanh.
@@ -93,14 +93,14 @@ export const TUNE = {
   nitroCooldown:  0.55,   // phai cho bao nhieu giay giua 2 lan dot.
                           // Khong co cai nay thi len cap cao co the doc het 6 binh trong
                           // 6 khung hinh lien, toc do no tung va game vo can bang.
-  speedCap:       150,    // gioi han toc do (m/s). Chan cho vat ly khong vo va xe khong
+  speedCap:       86,    // gioi han toc do (m/s). Chan cho vat ly khong vo va xe khong
                           // xuyen qua dia hinh khi bay qua nhanh.
 
   /* --- bang tang toc --- */
   padEvery:       185,    // khoang cach giua cac bang (met)
   padFirst:       120,
-  padGain:        0.26,   // bang dau tien cong 26% toc do
-  padDecay:       0.75,   // bang sau chi con 75% suc bang truoc
+  padGain:        0.17,   // bang dau tien cong 17% toc do
+  padDecay:       0.62,   // bang sau chi con 62% suc bang truoc
   padLift:        5.5,    // day len bao nhieu m/s
   padNeedFall:    -4.0,   // phai ROI xuong bang moi an duoc, toc do roi toi thieu (m/s).
                           // Nho co dieu nay, ban thap la dat de truot khong an duoc bang,
@@ -130,14 +130,16 @@ export const TUNE = {
                                       // Phai nhin tu ben moi keo sling duoc, keo tu sau duoi
                                       // xe thi khong thay minh dang keo len hay keo xuong.
   camAimLook:     [7, 0.5, 0],         // luc ngam thi ngam vao dau, so voi xe
-  camFly:         [-11.5, 3.3, 0],     // LUC BAY: dan ngay sau duoi xe. Z = 0 la ngay sau duoi.
+  camFly:         [-7.2, 2.3, 0],      // LUC BAY: dan ngay sau duoi xe. Z = 0 la ngay sau duoi.
+                                      // Keo gan tu -11.5 vao -7.2 cho nhap vai hon.
   camSide:        0.0,    // them do lech sang ben KHI DANG BAY.
                           // 0 = dan sau duoi xe, kho hon, nhap vai hon.
                           // 1 = lech han sang ben, de doc vong cung hon. 0.4 = lung chung.
   camSideDist:    17,     // khi camSide = 1 thi lech sang ben bao nhieu met
   camFlyBlend:    1.1,    // bao nhieu giay de chuyen tu goc ngam sang goc bay
-  camFollow:      0.1,    // do muot cua camera. Nho = muot va tre hon
-  camAltPull:     0.062,  // bay cao thi keo camera ra xa bao nhieu
+  camFollow:      0.135,  // do muot cua camera. Cao hon = bam xe sat hon, nhap vai hon
+  camAltPull:     0.03,   // bay cao thi keo camera ra xa bao nhieu. Ha xuong de camera
+                          // khong bi lui ra xa moi lan bay cao, giu cam giac ngoi sau xe.
   camPullY:       0.32,   // phan keo ra do ap vao chieu cao. De thap thi camera khong bi
                           // chuc xuong nhin tu tren khi xe bay cao
   camLookAhead:   0.3,    // nhin truoc theo huong bay
@@ -154,7 +156,7 @@ export const TUNE = {
   shakeMax:       26,     // gioi han rung, tranh nhin khong noi
   shakeDecay:     6.5,    // rung tat nhanh cham the nao
   fovBase:        60,     // goc mo camera luc dung yen
-  fovPerSpeed:    0.16,   // moi m/s thi mo them bao nhieu do. Tao cam giac toc do
+  fovPerSpeed:    0.22,   // moi m/s thi mo them bao nhieu do. Tao cam giac toc do
   fovMax:         76,
   rollDustSpeed:  14,     // lan tren dat nhanh hon nay thi bat bui
   volume:         0.55,   // am luong chung, 0 la tat het
@@ -162,7 +164,9 @@ export const TUNE = {
   tienVatPham:    120,    // an mot dong tien tren duong duoc bao nhieu
   tienVeDich:     300,    // thuong khi qua duoc vach dich
   tienVeDichLanDau: 1500, // thuong them cho lan dau qua dich cua moi map
-  bongLift:       26,     // bong bay day xe len bao nhieu m/s
+  bongLift:       15,     // bong bay day xe len bao nhieu m/s
+  nitroHoiToiDa:  2,      // moi luot chi hoi duoc toi da bao nhieu binh nitro tu vat pham.
+                          // Khong gioi han thi an nitro lien tuc la bay vo tan.
   banKinhAn:      7.0,    // ban kinh an vat pham (met). Nho qua thi bay ca luot khong an duoc gi.
   windMax:        70,     // toc do ung voi tieng gio to nhat
 
